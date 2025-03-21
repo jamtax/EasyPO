@@ -97,7 +97,7 @@ npx serve
 ## 📱 Responsive Design
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/yourusername/easypo/main/screenshots/responsive-design.png" alt="Responsive Design" width="80%">
+  <img src="https://github.com/jamtax/EasyPO/blob/05a4722c4b0ab8bda26b995fe618592154c90c2a/assets/Screenshot_Responsive-Design_easypo.jamtax.co.za.jpeg" alt="Responsive Design" width="80%">
 </div>
 
 EasyPO is designed to work on all devices:
