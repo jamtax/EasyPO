@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyPO - Purchase Order Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10">
+            <h1 class="text-3xl font-bold text-center text-indigo-700">EasyPO</h1>
+            <p class="text-center text-gray-600">Simple Purchase Order Generator</p>
+        </header>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Company Information</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Company Logo</label>
+                        <input type="file" id="companyLogo" accept="image/*" class="w-full" onchange="previewLogo(event)">
+                        <div id="logoPreview" class="mt-2 h-20 flex items-center">
+                            <p class="text-gray-500 text-sm">No logo uploaded</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Company Name</label>
+                        <input type="text" id="companyName" class="w-full px-3 py-2 border rounded-md" placeholder="Your Company Name">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">VAT Number</label>
+                        <input type="text" id="companyVat" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., 4080141999">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Physical Address</label>
+                        <textarea id="companyPhysical" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Your company's physical address"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Postal Address</label>
+                        <textarea id="companyPostal" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Your company's postal address"></textarea>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Supplier Information</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Supplier Name</label>
+                        <input type="text" id="supplierName" class="w-full px-3 py-2 border rounded-md" placeholder="Supplier Company Name">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Supplier VAT Number</label>
+                        <input type="text" id="supplierVat" class="w-full px-3 py-2 border rounded-md" placeholder="Supplier VAT Number">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Supplier Physical Address</label>
+                        <textarea id="supplierPhysical" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Supplier's physical address"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Supplier Postal Address</label>
+                        <textarea id="supplierPostal" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Supplier's postal address"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4">Purchase Order Details</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">PO Number</label>
+                        <input type="text" id="poNumber" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., PO0000002">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Reference</label>
+                        <input type="text" id="poReference" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., SO0000027">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Date</label>
+                        <input type="date" id="poDate" class="w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Due Date</label>
+                        <input type="date" id="poDueDate" class="w-full px-3 py-2 border rounded-md">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Overall Discount %</label>
+                    <input type="number" id="overallDiscount" class="w-full px-3 py-2 border rounded-md" placeholder="0.00" min="0" max="100" step="0.01">
+                </div>
+                
+                <h3 class="text-lg font-medium mb-2">Line Items</h3>
+                
+                <div class="overflow-x-auto mb-4">
+                    <table class="w-full border-collapse" id="lineItemsTable">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border p-2 text-left">Description</th>
+                                <th class="border p-2 text-center">Quantity</th>
+                                <th class="border p-2 text-center">Price (Excl.)</th>
+                                <th class="border p-2 text-center">Disc %</th>
+                                <th class="border p-2 text-center">VAT %</th>
+                                <th class="border p-2 text-center">Total (Excl.)</th>
+                                <th class="border p-2 text-center">Total (Incl.)</th>
+                                <th class="border p-2 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lineItemsBody">
+                            <!-- Line items will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <button id="addLineItem" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">Add Line Item</button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex justify-end">
+                    <div class="w-full md:w-1/3">
+                        <div class="flex justify-between border-t pt-2">
+                            <span class="font-medium">Total Discount:</span>
+                            <span id="totalDiscount">R0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span class="font-medium">Total Exclusive:</span>
+                            <span id="totalExclusive">R0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span class="font-medium">Total VAT:</span>
+                            <span id="totalVAT">R0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t border-b py-2 font-bold">
+                            <span>Grand Total:</span>
+                            <span id="grandTotal">R0.00</span>
+                        </div>
+                        <div class="flex justify-between border-b py-2 mt-4 font-bold text-lg">
+                            <span>BALANCE DUE</span>
+                            <span id="balanceDue">R0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 justify-center">
+                <button id="previewBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition">Preview</button>
+                <button id="generatePDFBtn" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition">Export as PDF</button>
+                <button id="generateWordBtn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition">Export as Word</button>
+                <button id="generateExcelBtn" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition">Export as Excel</button>
+            </div>
+        </div>
+        
+        <!-- Preview Modal -->
+        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-screen overflow-y-auto">
+                <div class="p-4 flex justify-between items-center border-b">
+                    <h2 class="text-xl font-bold">Purchase Order Preview</h2>
+                    <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="previewContent" class="p-6"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Purchase Order Template for Preview and Export -->
+    <div id="purchaseOrderTemplate" class="hidden">
+        <div class="purchase-order-container p-8 max-w-4xl mx-auto bg-white">
+            <div class="flex justify-between items-start mb-8">
+                <div class="logo-container" id="templateLogo"></div>
+                <div class="text-right">
+                    <h1 class="text-2xl font-bold mb-2">PURCHASE ORDER</h1>
+                    <div class="grid grid-cols-2 gap-x-2 text-sm">
+                        <span class="text-right font-semibold">NUMBER:</span>
+                        <span id="templatePoNumber"></span>
+                        
+                        <span class="text-right font-semibold">REFERENCE:</span>
+                        <span id="templatePoReference"></span>
+                        
+                        <span class="text-right font-semibold">DATE:</span>
+                        <span id="templatePoDate"></span>
+                        
+                        <span class="text-right font-semibold">DUE DATE:</span>
+                        <span id="templatePoDueDate"></span>
+                        
+                        <span class="text-right font-semibold">OVERALL DISCOUNT %:</span>
+                        <span id="templateOverallDiscount"></span>
+                        
+                        <span class="text-right font-semibold">PAGE:</span>
+                        <span>1/1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between mb-8">
+                <div class="w-1/2 pr-4">
+                    <h2 class="font-bold mb-2">FROM</h2>
+                    <div id="templateCompanyName" class="font-semibold"></div>
+                    <div class="text-sm">
+                        <div>VAT NO: <span id="templateCompanyVat"></span></div>
+                        <div class="mt-2">
+                            <div class="font-semibold">PHYSICAL ADDRESS:</div>
+                            <div id="templateCompanyPhysical" style="white-space: pre-line;"></div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="font-semibold">POSTAL ADDRESS:</div>
+                            <div id="templateCompanyPostal" style="white-space: pre-line;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-1/2 pl-4">
+                    <h2 class="font-bold mb-2">TO</h2>
+                    <div id="templateSupplierName" class="font-semibold"></div>
+                    <div class="text-sm">
+                        <div>SUPPLIER VAT NO: <span id="templateSupplierVat"></span></div>
+                        <div class="mt-2">
+                            <div class="font-semibold">PHYSICAL ADDRESS:</div>
+                            <div id="templateSupplierPhysical" style="white-space: pre-line;"></div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="font-semibold">POSTAL ADDRESS:</div>
+                            <div id="templateSupplierPostal" style="white-space: pre-line;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="w-full border-collapse mb-6">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border p-2 text-left">Description</th>
+                        <th class="border p-2 text-center">Quantity</th>
+                        <th class="border p-2 text-center">Excl. Price</th>
+                        <th class="border p-2 text-center">Disc %</th>
+                        <th class="border p-2 text-center">VAT %</th>
+                        <th class="border p-2 text-center">Excl. Total</th>
+                        <th class="border p-2 text-center">Incl. Total</th>
+                    </tr>
+                </thead>
+                <tbody id="templateLineItems">
+                    <!-- Line items will be added here -->
+                </tbody>
+            </table>
+            
+            <div class="flex justify-end mb-6">
+                <div class="w-1/3">
+                    <div class="flex justify-between border-t pt-2">
+                        <span class="font-medium">Total Discount:</span>
+                        <span id="templateTotalDiscount"></span>
+                    </div>
+                    <div class="flex justify-between border-t pt-2">
+                        <span class="font-medium">Total Exclusive:</span>
+                        <span id="templateTotalExclusive"></span>
+                    </div>
+                    <div class="flex justify-between border-t pt-2">
+                        <span class="font-medium">Total VAT:</span>
+                        <span id="templateTotalVAT"></span>
+                    </div>
+                    <div class="flex justify-between border-t border-b py-2 font-bold">
+                        <span>Grand Total:</span>
+                        <span id="templateGrandTotal"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center font-bold text-xl">
+                <div>BALANCE DUE</div>
+                <div id="templateBalanceDue"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize the current date for date inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('poDate').value = today;
+            
+            // Set due date to 10 days from today by default
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 10);
+            document.getElementById('poDueDate').value = dueDate.toISOString().split('T')[0];
+            
+            // Generate a unique PO number
+            const poNumber = 'PO' + Math.floor(Math.random() * 1000000).toString().padStart(7, '0');
+            document.getElementById('poNumber').value = poNumber;
+            
+            // Add first line item
+            addLineItem();
+        });
+        
+        // Logo preview
+        function previewLogo(event) {
+            const preview = document.getElementById('logoPreview');
+            preview.innerHTML = '';
+            
+            if (event.target.files && event.target.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'h-full object-contain';
+                    preview.appendChild(img);
+                }
+                
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+        
+        // Line item functionality
+        let lineItemCount = 0;
+        
+        document.getElementById('addLineItem').addEventListener('click', function() {
+            addLineItem();
+            calculateTotals();
+        });
+        
+        function addLineItem() {
+            const lineItemsBody = document.getElementById('lineItemsBody');
+            const rowId = 'item-' + lineItemCount++;
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.className = 'line-item';
+            row.innerHTML = `
+                <td class="border p-2">
+                    <input type="text" class="w-full px-2 py-1 border rounded item-description" placeholder="Item description">
+                </td>
+                <td class="border p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-quantity" min="1" value="1">
+                </td>
+                <td class="border p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-price" min="0" step="0.01" value="0.00">
+                </td>
+                <td class="border p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-discount" min="0" max="100" step="0.01" value="0.00">
+                </td>
+                <td class="border p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-vat" min="0" max="100" step="0.01" value="15.00">
+                </td>
+                <td class="border p-2 text-right item-total-excl">R0.00</td>
+                <td class="border p-2 text-right item-total-incl">R0.00</td>
+                <td class="border p-2 text-center">
+                    <button class="text-red-600 hover:text-red-800 delete-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </td>
+            `;
+            
+            lineItemsBody.appendChild(row);
+            
+            // Add event listeners to new row
+            const newRow = document.getElementById(rowId);
+            
+            // Delete button
+            newRow.querySelector('.delete-item').addEventListener('click', function() {
+                row.remove();
+                calculateTotals();
+            });
+            
+            // Recalculate on input change
+            const inputs = newRow.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculateTotals);
+            });
+        }
+        
+        // Calculate totals
+        function calculateTotals() {
+            const lineItems = document.querySelectorAll('.line-item');
+            let totalDiscount = 0;
+            let totalExclusive = 0;
+            let totalVAT = 0;
+            let grandTotal = 0;
+            
+            lineItems.forEach(item => {
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const discount = parseFloat(item.querySelector('.item-discount').value) || 0;
+                const vat = parseFloat(item.querySelector('.item-vat').value) || 0;
+                
+                // Calculate line totals
+                const discountAmount = (price * quantity) * (discount / 100);
+                const exclTotal = (price * quantity) - discountAmount;
+                const vatAmount = exclTotal * (vat / 100);
+                const inclTotal = exclTotal + vatAmount;
+                
+                // Update line total cells
+                item.querySelector('.item-total-excl').textContent = formatCurrency(exclTotal);
+                item.querySelector('.item-total-incl').textContent = formatCurrency(inclTotal);
+                
+                // Add to running totals
+                totalDiscount += discountAmount;
+                totalExclusive += exclTotal;
+                totalVAT += vatAmount;
+                grandTotal += inclTotal;
+            });
+            
+            // Update summary totals
+            document.getElementById('totalDiscount').textContent = formatCurrency(totalDiscount);
+            document.getElementById('totalExclusive').textContent = formatCurrency(totalExclusive);
+            document.getElementById('totalVAT').textContent = formatCurrency(totalVAT);
+            document.getElementById('grandTotal').textContent = formatCurrency(grandTotal);
+            document.getElementById('balanceDue').textContent = formatCurrency(grandTotal);
+        }
+        
+        // Format currency as ZAR
+        function formatCurrency(amount) {
+            return 'R' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Preview functionality
+        document.getElementById('previewBtn').addEventListener('click', function() {
+            updatePreview();
+            document.getElementById('previewModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('closePreviewBtn').addEventListener('click', function() {
+            document.getElementById('previewModal').classList.add('hidden');
+        });
+        
+        // Update preview content
+        function updatePreview() {
+            // Clone the template
+            const template = document.getElementById('purchaseOrderTemplate').cloneNode(true);
+            template.classList.remove('hidden');
+            
+            // Update company info
+            template.querySelector('#templateCompanyName').textContent = document.getElementById('companyName').value || 'Your Company';
+            template.querySelector('#templateCompanyVat').textContent = document.getElementById('companyVat').value || '';
+            template.querySelector('#templateCompanyPhysical').textContent = document.getElementById('companyPhysical').value || '';
+            template.querySelector('#templateCompanyPostal').textContent = document.getElementById('companyPostal').value || '';
+            
+            // Update supplier info
+            template.querySelector('#templateSupplierName').textContent = document.getElementById('supplierName').value || 'Supplier Name';
+            template.querySelector('#templateSupplierVat').textContent = document.getElementById('supplierVat').value || '';
+            template.querySelector('#templateSupplierPhysical').textContent = document.getElementById('supplierPhysical').value || '';
+            template.querySelector('#templateSupplierPostal').textContent = document.getElementById('supplierPostal').value || '';
+            
+            // Update PO details
+            template.querySelector('#templatePoNumber').textContent = document.getElementById('poNumber').value || '';
+            template.querySelector('#templatePoReference').textContent = document.getElementById('poReference').value || '';
+            template.querySelector('#templatePoDate').textContent = formatDate(document.getElementById('poDate').value) || '';
+            template.querySelector('#templatePoDueDate').textContent = formatDate(document.getElementById('poDueDate').value) || '';
+            template.querySelector('#templateOverallDiscount').textContent = document.getElementById('overallDiscount').value + '%' || '0.00%';
+            
+            // Add logo if uploaded
+            const logoPreview = document.getElementById('logoPreview');
+            const templateLogo = template.querySelector('#templateLogo');
+            if (logoPreview.querySelector('img')) {
+                const logoImg = logoPreview.querySelector('img').cloneNode(true);
+                logoImg.className = 'h-16 object-contain';
+                templateLogo.appendChild(logoImg);
+            }
+            
+            // Add line items
+            const templateLineItems = template.querySelector('#templateLineItems');
+            templateLineItems.innerHTML = '';
+            
+            const lineItems = document.querySelectorAll('.line-item');
+            lineItems.forEach(item => {
+                const description = item.querySelector('.item-description').value;
+                const quantity = item.querySelector('.item-quantity').value;
+                const price = item.querySelector('.item-price').value;
+                const discount = item.querySelector('.item-discount').value;
+                const vat = item.querySelector('.item-vat').value;
+                const exclTotal = item.querySelector('.item-total-excl').textContent;
+                const inclTotal = item.querySelector('.item-total-incl').textContent;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border p-2">${description || 'Item Description'}</td>
+                    <td class="border p-2 text-center">${quantity || '1'}</td>
+                    <td class="border p-2 text-right">R${parseFloat(price).toFixed(2)}</td>
+                    <td class="border p-2 text-center">${discount || '0.00'}%</td>
+                    <td class="border p-2 text-center">${vat || '15.00'}%</td>
+                    <td class="border p-2 text-right">${exclTotal}</td>
+                    <td class="border p-2 text-right">${inclTotal}</td>
+                `;
+                
+                templateLineItems.appendChild(row);
+            });
+            
+            // Update totals
+            template.querySelector('#templateTotalDiscount').textContent = document.getElementById('totalDiscount').textContent;
+            template.querySelector('#templateTotalExclusive').textContent = document.getElementById('totalExclusive').textContent;
+            template.querySelector('#templateTotalVAT').textContent = document.getElementById('totalVAT').textContent;
+            template.querySelector('#templateGrandTotal').textContent = document.getElementById('grandTotal').textContent;
+            template.querySelector('#templateBalanceDue').textContent = document.getElementById('balanceDue').textContent;
+            
+            // Add to preview container
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = '';
+            previewContent.appendChild(template);
+        }
+        
+        // Generate PDF
+        document.getElementById('generatePDFBtn').addEventListener('click', function() {
+            updatePreview();
+            const element = document.getElementById('previewContent').firstChild;
+            
+            const opt = {
+                margin: 10,
+                filename: document.getElementById('poNumber').value + '.pdf' || 'purchase-order.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        });
+        
+        // Generate Word Document
+        document.getElementById('generateWordBtn').addEventListener('click', function() {
+            // Update preview
+            updatePreview();
+            
+            // Get PO number for filename
+            const poNumber = document.getElementById('poNumber').value || 'purchase-order';
+            
+            // Create Word document using docx.js
+            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, BorderStyle, AlignmentType, HeadingLevel } = docx;
+            
+            // Create document
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({
+                            text: "PURCHASE ORDER",
+                            heading: HeadingLevel.HEADING_1,
+                            alignment: AlignmentType.CENTER,
+                            bold: true
+                        }),
+                        
+                        // PO details
+                        new Table({
+                            width: {
+                                size: 100,
+                                type: "pct"
+                            },
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            children: [new Paragraph("NUMBER:")],
+                                            width: {
+                                                size: 30,
+                                                type: "pct"
+                                            }
+                                        }),
