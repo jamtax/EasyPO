@@ -18,6 +18,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
     
+    <!-- Additional script to verify library loading -->
+    <script>
+      // Check if libraries are loaded correctly
+      window.addEventListener('load', function() {
+        // Check docx.js
+        if (typeof docx === 'undefined') {
+          console.error('docx.js library failed to load');
+          // Attempt to reload it
+          var script = document.createElement('script');
+          script.src = 'https://unpkg.com/docx@7.8.2/build/index.js';
+          script.onload = function() {
+            console.log('docx.js loaded from fallback source');
+            window.docxLoaded = true;
+          };
+          document.head.appendChild(script);
+        } else {
+          console.log('docx.js loaded successfully');
+          window.docxLoaded = true;
+        }
+      });
+    </script>
+    
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -703,25 +725,122 @@
             previewContent.innerHTML = '';
             previewContent.appendChild(template);
         }
+    
+// Generate PDF
+            document.getElementById('generatePDFBtn').addEventListener('click', function() {
+                try {
+                    // Update preview content first
+                    updatePreview();
+                    
+                    // Get the element with preview content
+                    const element = document.getElementById('previewContent').firstChild;
+                    
+                    // Make sure the element is visible and has content
+                    if (!element) {
+                        console.error("Preview content is empty");
+                        alert("Unable to generate PDF: Preview content is empty. Please try again.");
+                        return;
+                    }
+                    
+                    // Create a clone of the element to prevent modifications to the original
+                    const clonedElement = element.cloneNode(true);
+                    
+                    // Make sure all images are fully loaded before generating PDF
+                    const images = clonedElement.querySelectorAll('img');
+                    let imagesLoaded = true;
+                    
+                    images.forEach(img => {
+                        if (!img.complete) {
+                            imagesLoaded = false;
+                        }
+                    });
+                    
+                    if (!imagesLoaded) {
+                        console.log("Waiting for images to load...");
+                        setTimeout(() => {
+                            document.getElementById('generatePDFBtn').click();
+                        }, 500);
+                        return;
+                    }
+                    
+                    // Set PO number for filename
+                    const poNumber = document.getElementById('poNumber').value || 'purchase-order';
+                    
+                    // Configure PDF options for better rendering
+                    const opt = {
+                        margin: [10, 10, 10, 10],
+                        filename: poNumber + '.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { 
+                            scale: 2, // Higher scale for better quality
+                            useCORS: true, // Allow loading of images from other domains
+                            logging: true, // Enable logging for debugging
+                            letterRendering: true, // Improve rendering of text
+                            allowTaint: true, // Allow processing of tainted canvas
+                            foreignObjectRendering: true // Use ForeignObject when possible
+                        },
+                        jsPDF: { 
+                            unit: 'mm', 
+                            format: 'a4', 
+                            orientation: 'portrait',
+                            compress: true
+                        }
+                    };
+                    
+                    // Create a wrapper div to ensure proper rendering
+                    const wrapper = document.createElement('div');
+                    wrapper.appendChild(clonedElement);
+                    document.body.appendChild(wrapper);
+                    wrapper.style.position = 'absolute';
+                    wrapper.style.left = '-9999px';
+                    wrapper.style.top = '0';
+                    wrapper.style.width = '210mm'; // A4 width
+                    
+                    // Add a message to show processing status
+                    const loadingMsg = document.createElement('div');
+                    loadingMsg.innerText = 'Generating PDF...';
+                    loadingMsg.style.position = 'fixed';
+                    loadingMsg.style.top = '50%';
+                    loadingMsg.style.left = '50%';
+                    loadingMsg.style.transform = 'translate(-50%, -50%)';
+                    loadingMsg.style.padding = '20px';
+                    loadingMsg.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                    loadingMsg.style.color = 'white';
+                    loadingMsg.style.borderRadius = '5px';
+                    loadingMsg.style.zIndex = '9999';
+                    document.body.appendChild(loadingMsg);
+                    
+                    // Generate PDF with error handling
+                    html2pdf()
+                        .set(opt)
+                        .from(wrapper)
+                        .save()
+                        .then(() => {
+                            console.log('PDF generated successfully');
+                            document.body.removeChild(wrapper);
+                            document.body.removeChild(loadingMsg);
+                        })
+                        .catch(error => {
+                            console.error('Error generating PDF:', error);
+                            alert('There was an error generating the PDF. Please check the console for details.');
+                            document.body.removeChild(wrapper);
+                            document.body.removeChild(loadingMsg);
+                        });
+                    
+                } catch (error) {
+                    console.error('Error in PDF generation:', error);
+                    alert('There was an error generating the PDF. Please try again.');
+                }
+            });
         
-        // Generate PDF
-        document.getElementById('generatePDFBtn').addEventListener('click', function() {
-            updatePreview();
-            const element = document.getElementById('previewContent').firstChild;
-            
-            const opt = {
-                margin: 10,
-                filename: document.getElementById('poNumber').value + '.pdf' || 'purchase-order.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            html2pdf().set(opt).from(element).save();
-        });
-        
-        // Generate Word Document
+// Generate Word Document
         document.getElementById('generateWordBtn').addEventListener('click', function() {
+            // Check if library is loaded before proceeding
+            if (typeof docx === 'undefined') {
+                alert('Word export library is not loaded. Please check your internet connection and try again.');
+                return;
+            }
+            
             // Update preview first to ensure data is current
             updatePreview();
             
@@ -1189,7 +1308,7 @@
             }
         });        
 
-        // Generate Excel
+// Generate Excel
         document.getElementById('generateExcelBtn').addEventListener('click', function() {
             const poNumber = document.getElementById('poNumber').value || 'purchase-order';
             const companyName = document.getElementById('companyName').value || 'Your Company';
