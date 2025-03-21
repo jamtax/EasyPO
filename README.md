@@ -2,7 +2,7 @@
 
 <div align="center">
   
-![EasyPO Logo]([https://raw.githubusercontent.com/yourusername/easypo/main/public/logo.svg](https://raw.githubusercontent.com/jamtax/EasyPO/349fe6218b724a8a6f06a255f49c65572fc171f0/assets/easypo-logo%20(1).svg))
+![EasyPO Logo](https://raw.githubusercontent.com/jamtax/EasyPO/349fe6218b724a8a6f06a255f49c65572fc171f0/assets/easypo-logo%20(1).svg)
 
 [![GitHub license](https://img.shields.io/github/license/yourusername/easypo?color=blue)](https://github.com/yourusername/easypo/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/yourusername/easypo?style=social)](https://github.com/yourusername/easypo/stargazers)
