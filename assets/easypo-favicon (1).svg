@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#2563eb" />
+  
+  <!-- Document Base -->
+  <rect x="12" y="10" width="40" height="48" rx="4" fill="white" />
+  
+  <!-- Document Lines -->
+  <rect x="18" y="20" width="28" height="2" rx="1" fill="#93c5fd" />
+  <rect x="18" y="28" width="28" height="2" rx="1" fill="#93c5fd" />
+  <rect x="18" y="36" width="28" height="2" rx="1" fill="#93c5fd" />
+  <rect x="18" y="44" width="18" height="2" rx="1" fill="#93c5fd" />
+  
+  <!-- PO Text -->
+  <path d="M24 12C24 11.4477 24.4477 11 25 11H27C29.2091 11 31 12.7909 31 15C31 17.2091 29.2091 19 27 19H25C24.4477 19 24 18.5523 24 18V12Z" fill="#2563eb"/>
+  <path d="M32 12C32 11.4477 32.4477 11 33 11H35C37.2091 11 39 12.7909 39 15C39 17.2091 37.2091 19 35 19H33C32.4477 19 32 18.5523 32 18V12Z" fill="#2563eb"/>
+  
+  <!-- Inner P letter -->
+  <path d="M25 13V17H27C28.1046 17 29 16.1046 29 15C29 13.8954 28.1046 13 27 13H25Z" fill="white"/>
+  
+  <!-- Inner O letter -->
+  <path d="M35 13C33.8954 13 33 13.8954 33 15C33 16.1046 33.8954 17 35 17C36.1046 17 37 16.1046 37 15C37 13.8954 36.1046 13 35 13Z" fill="white"/>
+</svg>
