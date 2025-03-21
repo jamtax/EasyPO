@@ -2,7 +2,7 @@
 
 <div align="center">
   
-![EasyPO Logo](https://raw.githubusercontent.com/yourusername/easypo/main/public/logo.svg)
+![EasyPO Logo]([https://raw.githubusercontent.com/yourusername/easypo/main/public/logo.svg](https://raw.githubusercontent.com/jamtax/EasyPO/349fe6218b724a8a6f06a255f49c65572fc171f0/assets/easypo-logo%20(1).svg))
 
 [![GitHub license](https://img.shields.io/github/license/yourusername/easypo?color=blue)](https://github.com/yourusername/easypo/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/yourusername/easypo?style=social)](https://github.com/yourusername/easypo/stargazers)
@@ -12,7 +12,7 @@
 
 **Create beautiful purchase orders in seconds. Free, easy, and professional.**
 
-[View Demo](https://easypo.jamtax.co.za) | [Report Bug](https://github.com/yourusername/easypo/issues) | [Request Feature](https://github.com/yourusername/easypo/issues)
+[View Demo](https://easypo.jamtax.co.za) | [Report Bug](https://github.com/jamtax/easypo/issues) | [Request Feature](https://github.com/jamtax/easypo/issues)
 
 </div>
 
@@ -85,7 +85,7 @@ Try EasyPO now at [https://easypo.jamtax.co.za](https://easypo.jamtax.co.za)
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/easypo.git
+git clone https://github.com/jamtax/easypo.git
 
 # Navigate to the project directory
 cd easypo
@@ -128,12 +128,12 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-Project Link: [https://github.com/yourusername/easypo](https://github.com/yourusername/easypo)
+Project Link: [https://github.com/yourusername/easypo](https://github.com/jamtax/EasyPO)
 
 ---
 
 <div align="center">
   
-Made with ❤️ by [Your Name](https://github.com/yourusername)
+Made with ❤️ by [burnt-exe](https://github.com/burnt-exe)
 
 </div>
