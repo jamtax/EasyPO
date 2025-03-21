@@ -7,7 +7,6 @@
 [![GitHub license](https://img.shields.io/github/license/yourusername/easypo?color=blue)](https://github.com/yourusername/easypo/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/yourusername/easypo?style=social)](https://github.com/yourusername/easypo/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/yourusername/easypo)](https://github.com/yourusername/easypo/issues)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/12345678-1234-1234-1234-123456789012/deploy-status)](https://app.netlify.com/sites/easypo/deploys)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/yourusername/easypo/pulls)
 
 **Create beautiful purchase orders in seconds. Free, easy, and professional.**
