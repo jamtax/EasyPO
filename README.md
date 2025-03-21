@@ -29,12 +29,12 @@
       </ul>
     </td>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/yourusername/easypo/main/screenshots/create-po.png" alt="Create PO Screenshot">
+      <img src="https://github.com/jamtax/EasyPO/blob/main/assets/Screenshot_Preview_easypo.jamtax.co.za.jpeg?raw=true)">
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/yourusername/easypo/main/screenshots/export-options.png" alt="Export Options Screenshot">
+      <img src="https://github.com/user-attachments/assets/531b5caa-37ae-4d0b-a1de-d39047fe42ca">
     </td>
     <td width="50%">
       <h3>📊 Multiple Export Formats</h3>
@@ -78,7 +78,7 @@ Try EasyPO now at [https://easypo.jamtax.co.za](https://easypo.jamtax.co.za)
 1. Fork this repository
 2. Go to repository settings → Pages
 3. Set source to 'main' branch
-4. Your site will be published at `https://yourusername.github.io/easypo`
+4. Your site will be published at `https://yourusername.github.io/EasyPO`
 
 ### Option 2: Local Installation
 
