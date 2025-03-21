@@ -3,120 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyPO - Purchase Order Generator</title>
+    <title>EasyPO - Simple Purchase Order Generator</title>
+    <meta name="description" content="Create beautiful purchase orders in seconds. Free, easy, and professional.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/jamtax/EasyPO/867b12cd282071070aaa18bb02f27914d94e1150/assets/easypo-favicon.svg">
+    
+    <!-- Tailwind CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Required Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-10">
-            <h1 class="text-3xl font-bold text-center text-indigo-700">EasyPO</h1>
-            <p class="text-center text-gray-600">Simple Purchase Order Generator</p>
-        </header>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+        }
         
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .mobile-full {
+                width: 100% !important;
+            }
+            .mobile-stack {
+                flex-direction: column !important;
+            }
+            .mobile-mt-4 {
+                margin-top: 1rem !important;
+            }
+            .mobile-text-sm {
+                font-size: 0.875rem !important;
+            }
+            .mobile-px-2 {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        /* Better input focus styles */
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+        
+        /* Responsive table styles */
+        .responsive-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* WhatsApp button */
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-4 px-4 sm:px-6 no-print">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 sm:mb-0">
+                <img src="https://raw.githubusercontent.com/jamtax/EasyPO/867b12cd282071070aaa18bb02f27914d94e1150/assets/easypo-logo.svg" alt="EasyPO Logo" class="h-10 mr-3">
                 <div>
-                    <h2 class="text-xl font-semibold mb-4">Company Information</h2>
+                    <h1 class="text-2xl font-bold text-indigo-700">EasyPO</h1>
+                    <p class="text-gray-600 text-sm">Simple Purchase Order Generator</p>
+                </div>
+            </div>
+            <div class="flex space-x-4">
+                <a href="https://github.com/jamtax/EasyPO" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center">
+                    <i class="fab fa-github mr-1"></i> GitHub
+                </a>
+                <a href="https://github.com/jamtax/EasyPO/issues" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center">
+                    <i class="fas fa-bug mr-1"></i> Report Issue
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6 md:py-8">
+        <!-- Quick Tour / Tips -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded shadow-sm no-print">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Quick Tips</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p>1. Fill in your company and supplier information</p>
+                        <p>2. Add your line items with quantities and prices</p>
+                        <p>3. Preview your PO before exporting</p>
+                        <p>4. Export in your preferred format (PDF, Word, Excel)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PO Form -->
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+            <!-- Company & Supplier Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Company Information -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-building mr-2 text-indigo-600"></i> Company Information
+                    </h2>
                     
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Company Logo</label>
-                        <input type="file" id="companyLogo" accept="image/*" class="w-full" onchange="previewLogo(event)">
-                        <div id="logoPreview" class="mt-2 h-20 flex items-center">
-                            <p class="text-gray-500 text-sm">No logo uploaded</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Logo</label>
+                            <input type="file" id="companyLogo" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" onchange="previewLogo(event)">
+                            <div id="logoPreview" class="mt-2 h-16 flex items-center">
+                                <p class="text-gray-500 text-sm">No logo uploaded</p>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Company Name</label>
-                        <input type="text" id="companyName" class="w-full px-3 py-2 border rounded-md" placeholder="Your Company Name">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">VAT Number</label>
-                        <input type="text" id="companyVat" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., 4080141999">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Physical Address</label>
-                        <textarea id="companyPhysical" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Your company's physical address"></textarea>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Postal Address</label>
-                        <textarea id="companyPostal" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Your company's postal address"></textarea>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyName">Company Name</label>
+                            <input type="text" id="companyName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Your Company Name">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyVat">VAT Number</label>
+                            <input type="text" id="companyVat" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 4080141999">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyPhysical">Physical Address</label>
+                            <textarea id="companyPhysical" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Your company's physical address"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyPostal">Postal Address</label>
+                            <textarea id="companyPostal" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Your company's postal address"></textarea>
+                        </div>
                     </div>
                 </div>
                 
-                <div>
-                    <h2 class="text-xl font-semibold mb-4">Supplier Information</h2>
+                <!-- Supplier Information -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-truck-loading mr-2 text-indigo-600"></i> Supplier Information
+                    </h2>
                     
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Supplier Name</label>
-                        <input type="text" id="supplierName" class="w-full px-3 py-2 border rounded-md" placeholder="Supplier Company Name">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Supplier VAT Number</label>
-                        <input type="text" id="supplierVat" class="w-full px-3 py-2 border rounded-md" placeholder="Supplier VAT Number">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Supplier Physical Address</label>
-                        <textarea id="supplierPhysical" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Supplier's physical address"></textarea>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">Supplier Postal Address</label>
-                        <textarea id="supplierPostal" class="w-full px-3 py-2 border rounded-md" rows="3" placeholder="Supplier's postal address"></textarea>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierName">Supplier Name</label>
+                            <input type="text" id="supplierName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Supplier Company Name">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierVat">Supplier VAT Number</label>
+                            <input type="text" id="supplierVat" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Supplier VAT Number">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierPhysical">Supplier Physical Address</label>
+                            <textarea id="supplierPhysical" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Supplier's physical address"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierPostal">Supplier Postal Address</label>
+                            <textarea id="supplierPostal" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Supplier's postal address"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
             
+            <!-- Purchase Order Details -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-file-invoice mr-2 text-indigo-600"></i> Purchase Order Details
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poNumber">PO Number</label>
+                        <input type="text" id="poNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., PO0000002">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poReference">Reference</label>
+                        <input type="text" id="poReference" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., SO0000027">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poDate">Date</label>
+                        <input type="date" id="poDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poDueDate">Due Date</label>
+                        <input type="date" id="poDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="overallDiscount">Overall Discount %</label>
+                    <input type="number" id="overallDiscount" class="w-full sm:w-1/4 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00" min="0" max="100" step="0.01" value="0.00">
+                </div>
+            </div>
+            
+            <!-- Line Items -->
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4">Purchase Order Details</h2>
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-list mr-2 text-indigo-600"></i> Line Items
+                </h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <label class="block text-gray-700 mb-2">PO Number</label>
-                        <input type="text" id="poNumber" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., PO0000002">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 mb-2">Reference</label>
-                        <input type="text" id="poReference" class="w-full px-3 py-2 border rounded-md" placeholder="e.g., SO0000027">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 mb-2">Date</label>
-                        <input type="date" id="poDate" class="w-full px-3 py-2 border rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 mb-2">Due Date</label>
-                        <input type="date" id="poDueDate" class="w-full px-3 py-2 border rounded-md">
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-gray-700 mb-2">Overall Discount %</label>
-                    <input type="number" id="overallDiscount" class="w-full px-3 py-2 border rounded-md" placeholder="0.00" min="0" max="100" step="0.01">
-                </div>
-                
-                <h3 class="text-lg font-medium mb-2">Line Items</h3>
-                
-                <div class="overflow-x-auto mb-4">
+                <div class="responsive-table mb-4">
                     <table class="w-full border-collapse" id="lineItemsTable">
                         <thead>
                             <tr class="bg-gray-100">
-                                <th class="border p-2 text-left">Description</th>
-                                <th class="border p-2 text-center">Quantity</th>
-                                <th class="border p-2 text-center">Price (Excl.)</th>
-                                <th class="border p-2 text-center">Disc %</th>
-                                <th class="border p-2 text-center">VAT %</th>
-                                <th class="border p-2 text-center">Total (Excl.)</th>
-                                <th class="border p-2 text-center">Total (Incl.)</th>
-                                <th class="border p-2 text-center">Action</th>
+                                <th class="border border-gray-300 p-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Qty</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Price (Excl.)</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Disc %</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">VAT %</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Total (Excl.)</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Total (Incl.)</th>
+                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody id="lineItemsBody">
@@ -125,66 +260,102 @@
                     </table>
                 </div>
                 
-                <button id="addLineItem" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">Add Line Item</button>
+                <button id="addLineItem" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-all flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Add Line Item
+                </button>
             </div>
             
+            <!-- Totals -->
             <div class="mb-6">
                 <div class="flex justify-end">
-                    <div class="w-full md:w-1/3">
-                        <div class="flex justify-between border-t pt-2">
-                            <span class="font-medium">Total Discount:</span>
-                            <span id="totalDiscount">R0.00</span>
+                    <div class="w-full sm:w-1/2 md:w-1/3">
+                        <div class="flex justify-between border-t border-gray-200 pt-2">
+                            <span class="font-medium text-gray-700">Total Discount:</span>
+                            <span id="totalDiscount" class="text-gray-900">R0.00</span>
                         </div>
-                        <div class="flex justify-between border-t pt-2">
-                            <span class="font-medium">Total Exclusive:</span>
-                            <span id="totalExclusive">R0.00</span>
+                        <div class="flex justify-between border-t border-gray-200 pt-2">
+                            <span class="font-medium text-gray-700">Total Exclusive:</span>
+                            <span id="totalExclusive" class="text-gray-900">R0.00</span>
                         </div>
-                        <div class="flex justify-between border-t pt-2">
-                            <span class="font-medium">Total VAT:</span>
-                            <span id="totalVAT">R0.00</span>
+                        <div class="flex justify-between border-t border-gray-200 pt-2">
+                            <span class="font-medium text-gray-700">Total VAT:</span>
+                            <span id="totalVAT" class="text-gray-900">R0.00</span>
                         </div>
-                        <div class="flex justify-between border-t border-b py-2 font-bold">
-                            <span>Grand Total:</span>
-                            <span id="grandTotal">R0.00</span>
+                        <div class="flex justify-between border-t border-b border-gray-200 py-2 font-bold">
+                            <span class="text-gray-900">Grand Total:</span>
+                            <span id="grandTotal" class="text-gray-900">R0.00</span>
                         </div>
-                        <div class="flex justify-between border-b py-2 mt-4 font-bold text-lg">
-                            <span>BALANCE DUE</span>
-                            <span id="balanceDue">R0.00</span>
+                        <div class="flex justify-between border-b border-gray-200 py-2 mt-4 font-bold text-lg">
+                            <span class="text-gray-900">BALANCE DUE</span>
+                            <span id="balanceDue" class="text-gray-900">R0.00</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="flex flex-wrap gap-4 justify-center">
-                <button id="previewBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition">Preview</button>
-                <button id="generatePDFBtn" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition">Export as PDF</button>
-                <button id="generateWordBtn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition">Export as Word</button>
-                <button id="generateExcelBtn" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition">Export as Excel</button>
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button id="previewBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-all flex items-center">
+                    <i class="fas fa-eye mr-2"></i> Preview
+                </button>
+                <button id="generatePDFBtn" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition-all flex items-center">
+                    <i class="fas fa-file-pdf mr-2"></i> Export as PDF
+                </button>
+                <button id="generateWordBtn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-all flex items-center">
+                    <i class="fas fa-file-word mr-2"></i> Export as Word
+                </button>
+                <button id="generateExcelBtn" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-all flex items-center">
+                    <i class="fas fa-file-excel mr-2"></i> Export as Excel
+                </button>
             </div>
         </div>
-        
-        <!-- Preview Modal -->
-        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-screen overflow-y-auto">
-                <div class="p-4 flex justify-between items-center border-b">
-                    <h2 class="text-xl font-bold">Purchase Order Preview</h2>
-                    <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 px-4 no-print">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-center md:text-left">
+                        Skunkworks Digital | <a href="mailto:info@skunkworksdigital.co.za" class="text-indigo-300 hover:text-indigo-200">info@skunkworksdigital.co.za</a>
+                    </p>
                 </div>
-                <div id="previewContent" class="p-6"></div>
+                <div>
+                    <a href="https://wa.me/276864193951" class="whatsapp-btn" target="_blank">
+                        <i class="fab fa-whatsapp"></i> WhatsApp Chat
+                    </a>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-gray-400 text-sm">
+                <p>© 2025 Skunkworks Digital. All rights reserved.</p>
+                <p class="mt-1">Made with <span class="text-red-400">❤</span> in South Africa</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 no-print">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-screen overflow-y-auto">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Purchase Order Preview</h2>
+                <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="previewContent" class="p-6"></div>
+            <div class="p-4 border-t border-gray-200 flex justify-end">
+                <button id="closePreviewBtnBottom" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-all">
+                    Close Preview
+                </button>
             </div>
         </div>
     </div>
     
-    <!-- Purchase Order Template for Preview and Export -->
+    <!-- Purchase Order Template (for Preview and Export) -->
     <div id="purchaseOrderTemplate" class="hidden">
-        <div class="purchase-order-container p-8 max-w-4xl mx-auto bg-white">
-            <div class="flex justify-between items-start mb-8">
-                <div class="logo-container" id="templateLogo"></div>
+        <div class="purchase-order-container p-6 max-w-4xl mx-auto bg-white">
+            <div class="flex flex-col sm:flex-row justify-between items-start mb-8">
+                <div class="logo-container mb-4 sm:mb-0" id="templateLogo"></div>
                 <div class="text-right">
                     <h1 class="text-2xl font-bold mb-2">PURCHASE ORDER</h1>
                     <div class="grid grid-cols-2 gap-x-2 text-sm">
@@ -209,8 +380,8 @@
                 </div>
             </div>
             
-            <div class="flex justify-between mb-8">
-                <div class="w-1/2 pr-4">
+            <div class="flex flex-col sm:flex-row justify-between mb-8">
+                <div class="w-full sm:w-1/2 pr-0 sm:pr-4 mb-4 sm:mb-0">
                     <h2 class="font-bold mb-2">FROM</h2>
                     <div id="templateCompanyName" class="font-semibold"></div>
                     <div class="text-sm">
@@ -226,7 +397,7 @@
                     </div>
                 </div>
                 
-                <div class="w-1/2 pl-4">
+                <div class="w-full sm:w-1/2 pl-0 sm:pl-4">
                     <h2 class="font-bold mb-2">TO</h2>
                     <div id="templateSupplierName" class="font-semibold"></div>
                     <div class="text-sm">
@@ -243,39 +414,41 @@
                 </div>
             </div>
             
-            <table class="w-full border-collapse mb-6">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="border p-2 text-left">Description</th>
-                        <th class="border p-2 text-center">Quantity</th>
-                        <th class="border p-2 text-center">Excl. Price</th>
-                        <th class="border p-2 text-center">Disc %</th>
-                        <th class="border p-2 text-center">VAT %</th>
-                        <th class="border p-2 text-center">Excl. Total</th>
-                        <th class="border p-2 text-center">Incl. Total</th>
-                    </tr>
-                </thead>
-                <tbody id="templateLineItems">
-                    <!-- Line items will be added here -->
-                </tbody>
-            </table>
+            <div class="responsive-table mb-6">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-300 p-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Qty</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Excl. Price</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Disc %</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">VAT %</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Excl. Total</th>
+                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Incl. Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="templateLineItems">
+                        <!-- Line items will be added here -->
+                    </tbody>
+                </table>
+            </div>
             
             <div class="flex justify-end mb-6">
-                <div class="w-1/3">
-                    <div class="flex justify-between border-t pt-2">
-                        <span class="font-medium">Total Discount:</span>
+                <div class="w-full sm:w-1/2 md:w-1/3">
+                    <div class="flex justify-between border-t border-gray-200 pt-2">
+                        <span class="font-medium text-gray-700">Total Discount:</span>
                         <span id="templateTotalDiscount"></span>
                     </div>
-                    <div class="flex justify-between border-t pt-2">
-                        <span class="font-medium">Total Exclusive:</span>
+                    <div class="flex justify-between border-t border-gray-200 pt-2">
+                        <span class="font-medium text-gray-700">Total Exclusive:</span>
                         <span id="templateTotalExclusive"></span>
                     </div>
-                    <div class="flex justify-between border-t pt-2">
-                        <span class="font-medium">Total VAT:</span>
+                    <div class="flex justify-between border-t border-gray-200 pt-2">
+                        <span class="font-medium text-gray-700">Total VAT:</span>
                         <span id="templateTotalVAT"></span>
                     </div>
-                    <div class="flex justify-between border-t border-b py-2 font-bold">
-                        <span>Grand Total:</span>
+                    <div class="flex justify-between border-t border-b border-gray-200 py-2 font-bold">
+                        <span class="text-gray-900">Grand Total:</span>
                         <span id="templateGrandTotal"></span>
                     </div>
                 </div>
@@ -305,7 +478,22 @@
             
             // Add first line item
             addLineItem();
+            
+            // Set up preview modal close buttons
+            document.getElementById('closePreviewBtn').addEventListener('click', closePreviewModal);
+            document.getElementById('closePreviewBtnBottom').addEventListener('click', closePreviewModal);
+            
+            // Handle clicks outside the modal to close it
+            document.getElementById('previewModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closePreviewModal();
+                }
+            });
         });
+        
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
         
         // Logo preview
         function previewLogo(event) {
@@ -342,30 +530,26 @@
             row.id = rowId;
             row.className = 'line-item';
             row.innerHTML = `
-                <td class="border p-2">
-                    <input type="text" class="w-full px-2 py-1 border rounded item-description" placeholder="Item description">
+                <td class="border border-gray-300 p-2">
+                    <input type="text" class="w-full px-2 py-1 border rounded-md item-description" placeholder="Item description">
                 </td>
-                <td class="border p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-quantity" min="1" value="1">
+                <td class="border border-gray-300 p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-quantity" min="1" value="1">
                 </td>
-                <td class="border p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-price" min="0" step="0.01" value="0.00">
+                <td class="border border-gray-300 p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-price" min="0" step="0.01" value="0.00">
                 </td>
-                <td class="border p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-discount" min="0" max="100" step="0.01" value="0.00">
+                <td class="border border-gray-300 p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-discount" min="0" max="100" step="0.01" value="0.00">
                 </td>
-                <td class="border p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded text-center item-vat" min="0" max="100" step="0.01" value="15.00">
+                <td class="border border-gray-300 p-2">
+                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-vat" min="0" max="100" step="0.01" value="15.00">
                 </td>
-                <td class="border p-2 text-right item-total-excl">R0.00</td>
-                <td class="border p-2 text-right item-total-incl">R0.00</td>
-                <td class="border p-2 text-center">
-                    <button class="text-red-600 hover:text-red-800 delete-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                        </svg>
+                <td class="border border-gray-300 p-2 text-right item-total-excl">R0.00</td>
+                <td class="border border-gray-300 p-2 text-right item-total-incl">R0.00</td>
+                <td class="border border-gray-300 p-2 text-center">
+                    <button class="text-red-600 hover:text-red-800 delete-item" aria-label="Delete item">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
             `;
@@ -445,10 +629,6 @@
             document.getElementById('previewModal').classList.remove('hidden');
         });
         
-        document.getElementById('closePreviewBtn').addEventListener('click', function() {
-            document.getElementById('previewModal').classList.add('hidden');
-        });
-        
         // Update preview content
         function updatePreview() {
             // Clone the template
@@ -499,13 +679,13 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="border p-2">${description || 'Item Description'}</td>
-                    <td class="border p-2 text-center">${quantity || '1'}</td>
-                    <td class="border p-2 text-right">R${parseFloat(price).toFixed(2)}</td>
-                    <td class="border p-2 text-center">${discount || '0.00'}%</td>
-                    <td class="border p-2 text-center">${vat || '15.00'}%</td>
-                    <td class="border p-2 text-right">${exclTotal}</td>
-                    <td class="border p-2 text-right">${inclTotal}</td>
+                    <td class="border border-gray-300 p-2">${description || 'Item Description'}</td>
+                    <td class="border border-gray-300 p-2 text-center">${quantity || '1'}</td>
+                    <td class="border border-gray-300 p-2 text-right">R${parseFloat(price).toFixed(2)}</td>
+                    <td class="border border-gray-300 p-2 text-center">${discount || '0.00'}%</td>
+                    <td class="border border-gray-300 p-2 text-center">${vat || '15.00'}%</td>
+                    <td class="border border-gray-300 p-2 text-right">${exclTotal}</td>
+                    <td class="border border-gray-300 p-2 text-right">${inclTotal}</td>
                 `;
                 
                 templateLineItems.appendChild(row);
@@ -542,40 +722,358 @@
         
         // Generate Word Document
         document.getElementById('generateWordBtn').addEventListener('click', function() {
-            // Update preview
-            updatePreview();
-            
-            // Get PO number for filename
             const poNumber = document.getElementById('poNumber').value || 'purchase-order';
+            const companyName = document.getElementById('companyName').value || 'Your Company';
+            const supplierName = document.getElementById('supplierName').value || 'Supplier Name';
             
-            // Create Word document using docx.js
-            const { Document, Paragraph, TextRun, Table, TableRow, TableCell, BorderStyle, AlignmentType, HeadingLevel } = docx;
+            // Create a simple Word document
+            // This is a simplified version using docx.js
+            const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } = docx;
             
-            // Create document
+            // Create header paragraphs
+            const headerParagraphs = [
+                new Paragraph({
+                    text: "PURCHASE ORDER",
+                    heading: HeadingLevel.HEADING_1,
+                    alignment: AlignmentType.CENTER,
+                }),
+                new Paragraph({
+                    text: "",
+                    spacing: {
+                        after: 200,
+                    },
+                }),
+            ];
+            
+            // Create PO details table
+            const poDetailsRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph("PO Number:")],
+                            width: { size: 25, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(document.getElementById('poNumber').value || '')],
+                            width: { size: 25, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph("Date:")],
+                            width: { size: 25, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(formatDate(document.getElementById('poDate').value) || '')],
+                            width: { size: 25, type: WidthType.PERCENTAGE }
+                        }),
+                    ],
+                }),
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph("Reference:")],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(document.getElementById('poReference').value || '')],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph("Due Date:")],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(formatDate(document.getElementById('poDueDate').value) || '')],
+                        }),
+                    ],
+                }),
+            ];
+            
+            const poDetailsTable = new Table({
+                rows: poDetailsRows,
+                width: {
+                    size: 100,
+                    type: WidthType.PERCENTAGE,
+                },
+            });
+            
+            // Create addresses section
+            const addressesParagraphs = [
+                new Paragraph({
+                    text: "",
+                    spacing: {
+                        after: 200,
+                    },
+                }),
+                new Paragraph({
+                    text: "FROM:",
+                    heading: HeadingLevel.HEADING_3,
+                }),
+                new Paragraph(document.getElementById('companyName').value || 'Your Company'),
+                new Paragraph("VAT No: " + (document.getElementById('companyVat').value || '')),
+                new Paragraph({
+                    text: "Physical Address:",
+                    bold: true,
+                }),
+                new Paragraph(document.getElementById('companyPhysical').value || ''),
+                new Paragraph({
+                    text: "Postal Address:",
+                    bold: true,
+                }),
+                new Paragraph(document.getElementById('companyPostal').value || ''),
+                new Paragraph({
+                    text: "",
+                    spacing: {
+                        after: 200,
+                    },
+                }),
+                new Paragraph({
+                    text: "TO:",
+                    heading: HeadingLevel.HEADING_3,
+                }),
+                new Paragraph(document.getElementById('supplierName').value || 'Supplier Name'),
+                new Paragraph("VAT No: " + (document.getElementById('supplierVat').value || '')),
+                new Paragraph({
+                    text: "Physical Address:",
+                    bold: true,
+                }),
+                new Paragraph(document.getElementById('supplierPhysical').value || ''),
+                new Paragraph({
+                    text: "Postal Address:",
+                    bold: true,
+                }),
+                new Paragraph(document.getElementById('supplierPostal').value || ''),
+                new Paragraph({
+                    text: "",
+                    spacing: {
+                        after: 200,
+                    },
+                }),
+            ];
+            
+            // Create line items table headers
+            const lineItemsTableRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Description", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Qty", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Price", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Disc %", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "VAT %", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Total (Excl)", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Total (Incl)", bold: true })],
+                        }),
+                    ],
+                }),
+            ];
+            
+            // Add line items
+            const lineItems = document.querySelectorAll('.line-item');
+            lineItems.forEach(item => {
+                const description = item.querySelector('.item-description').value || 'Item Description';
+                const quantity = item.querySelector('.item-quantity').value || '1';
+                const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
+                const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
+                const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
+                const exclTotal = item.querySelector('.item-total-excl').textContent;
+                const inclTotal = item.querySelector('.item-total-incl').textContent;
+                
+                lineItemsTableRows.push(
+                    new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph(description)] }),
+                            new TableCell({ children: [new Paragraph(quantity)] }),
+                            new TableCell({ children: [new Paragraph(price)] }),
+                            new TableCell({ children: [new Paragraph(discount)] }),
+                            new TableCell({ children: [new Paragraph(vat)] }),
+                            new TableCell({ children: [new Paragraph(exclTotal)] }),
+                            new TableCell({ children: [new Paragraph(inclTotal)] }),
+                        ],
+                    }),
+                );
+            });
+            
+            const lineItemsTable = new Table({
+                rows: lineItemsTableRows,
+                width: {
+                    size: 100,
+                    type: WidthType.PERCENTAGE,
+                },
+            });
+            
+            // Create totals table
+            const totalsTableRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph("Total Discount:")],
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(document.getElementById('totalDiscount').textContent)],
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        }),
+                    ],
+                }),
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph("Total Exclusive:")],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(document.getElementById('totalExclusive').textContent)],
+                        }),
+                    ],
+                }),
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph("Total VAT:")],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph(document.getElementById('totalVAT').textContent)],
+                        }),
+                    ],
+                }),
+                new TableRow({
+                    children: [
+                        new TableCell({ 
+                            children: [new Paragraph({ text: "Grand Total:", bold: true })],
+                        }),
+                        new TableCell({ 
+                            children: [new Paragraph({ text: document.getElementById('grandTotal').textContent, bold: true })],
+                        }),
+                    ],
+                }),
+            ];
+            
+            const totalsTable = new Table({
+                rows: totalsTableRows,
+                width: {
+                    size: 50,
+                    type: WidthType.PERCENTAGE,
+                },
+                alignment: AlignmentType.RIGHT,
+            });
+            
+            // Create final paragraphs
+            const finalParagraphs = [
+                new Paragraph({
+                    text: "",
+                    spacing: {
+                        after: 200,
+                    },
+                }),
+                new Paragraph({
+                    text: "BALANCE DUE",
+                    alignment: AlignmentType.CENTER,
+                    heading: HeadingLevel.HEADING_2,
+                }),
+                new Paragraph({
+                    text: document.getElementById('balanceDue').textContent,
+                    alignment: AlignmentType.CENTER,
+                    heading: HeadingLevel.HEADING_3,
+                }),
+            ];
+            
+            // Create document with all components
             const doc = new Document({
                 sections: [{
                     properties: {},
                     children: [
-                        new Paragraph({
-                            text: "PURCHASE ORDER",
-                            heading: HeadingLevel.HEADING_1,
-                            alignment: AlignmentType.CENTER,
-                            bold: true
-                        }),
-                        
-                        // PO details
-                        new Table({
-                            width: {
-                                size: 100,
-                                type: "pct"
-                            },
-                            rows: [
-                                new TableRow({
-                                    children: [
-                                        new TableCell({
-                                            children: [new Paragraph("NUMBER:")],
-                                            width: {
-                                                size: 30,
-                                                type: "pct"
-                                            }
-                                        }),
+                        ...headerParagraphs,
+                        poDetailsTable,
+                        ...addressesParagraphs,
+                        lineItemsTable,
+                        new Paragraph({ text: "", spacing: { after: 200 } }),
+                        totalsTable,
+                        ...finalParagraphs,
+                    ],
+                }],
+            });
+            
+            // Generate and save document
+            docx.Packer.toBlob(doc).then(blob => {
+                saveAs(blob, poNumber + ".docx");
+            });
+        });
+        
+        // Generate Excel
+        document.getElementById('generateExcelBtn').addEventListener('click', function() {
+            const poNumber = document.getElementById('poNumber').value || 'purchase-order';
+            const companyName = document.getElementById('companyName').value || 'Your Company';
+            const supplierName = document.getElementById('supplierName').value || 'Supplier Name';
+            
+            // Create a workbook with a worksheet
+            const wb = XLSX.utils.book_new();
+            
+            // Create header data
+            const headerData = [
+                ["PURCHASE ORDER"],
+                [""],
+                ["PO Number:", document.getElementById('poNumber').value || '', "Date:", formatDate(document.getElementById('poDate').value) || ''],
+                ["Reference:", document.getElementById('poReference').value || '', "Due Date:", formatDate(document.getElementById('poDueDate').value) || ''],
+                ["Overall Discount:", document.getElementById('overallDiscount').value + "%" || '0.00%'],
+                [""],
+                ["FROM:"],
+                [companyName],
+                ["VAT No:", document.getElementById('companyVat').value || ''],
+                ["Physical Address:", document.getElementById('companyPhysical').value || ''],
+                ["Postal Address:", document.getElementById('companyPostal').value || ''],
+                [""],
+                ["TO:"],
+                [supplierName],
+                ["VAT No:", document.getElementById('supplierVat').value || ''],
+                ["Physical Address:", document.getElementById('supplierPhysical').value || ''],
+                ["Postal Address:", document.getElementById('supplierPostal').value || ''],
+                [""],
+                ["Description", "Quantity", "Price (Excl)", "Disc %", "VAT %", "Total (Excl)", "Total (Incl)"]
+            ];
+            
+            // Add line items
+            const lineItems = document.querySelectorAll('.line-item');
+            const lineItemsData = [];
+            
+            lineItems.forEach(item => {
+                const description = item.querySelector('.item-description').value || 'Item Description';
+                const quantity = item.querySelector('.item-quantity').value || '1';
+                const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
+                const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
+                const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
+                const exclTotal = item.querySelector('.item-total-excl').textContent;
+                const inclTotal = item.querySelector('.item-total-incl').textContent;
+                
+                lineItemsData.push([description, quantity, price, discount, vat, exclTotal, inclTotal]);
+            });
+            
+            // Add totals
+            const totalsData = [
+                [""],
+                ["Total Discount:", "", "", "", "", document.getElementById('totalDiscount').textContent],
+                ["Total Exclusive:", "", "", "", "", document.getElementById('totalExclusive').textContent],
+                ["Total VAT:", "", "", "", "", document.getElementById('totalVAT').textContent],
+                ["Grand Total:", "", "", "", "", document.getElementById('grandTotal').textContent],
+                [""],
+                ["BALANCE DUE", "", "", "", "", document.getElementById('balanceDue').textContent]
+            ];
+            
+            // Combine all data
+            const allData = [...headerData, ...lineItemsData, ...totalsData];
+            
+            // Create worksheet and add to workbook
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            XLSX.utils.book_append_sheet(wb, ws, "Purchase Order");
+            
+            // Generate and save Excel file
+            XLSX.writeFile(wb, poNumber + ".xlsx");
+        });
+    </script>
