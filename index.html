@@ -722,291 +722,473 @@
         
         // Generate Word Document
         document.getElementById('generateWordBtn').addEventListener('click', function() {
+            // Update preview first to ensure data is current
+            updatePreview();
+            
+            // Get PO number for filename
             const poNumber = document.getElementById('poNumber').value || 'purchase-order';
-            const companyName = document.getElementById('companyName').value || 'Your Company';
-            const supplierName = document.getElementById('supplierName').value || 'Supplier Name';
             
-            // Create a simple Word document
-            // This is a simplified version using docx.js
-            const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } = docx;
-            
-            // Create header paragraphs
-            const headerParagraphs = [
-                new Paragraph({
-                    text: "PURCHASE ORDER",
-                    heading: HeadingLevel.HEADING_1,
-                    alignment: AlignmentType.CENTER,
-                }),
-                new Paragraph({
-                    text: "",
-                    spacing: {
-                        after: 200,
-                    },
-                }),
-            ];
-            
-            // Create PO details table
-            const poDetailsRows = [
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph("PO Number:")],
-                            width: { size: 25, type: WidthType.PERCENTAGE }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(document.getElementById('poNumber').value || '')],
-                            width: { size: 25, type: WidthType.PERCENTAGE }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph("Date:")],
-                            width: { size: 25, type: WidthType.PERCENTAGE }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(formatDate(document.getElementById('poDate').value) || '')],
-                            width: { size: 25, type: WidthType.PERCENTAGE }
-                        }),
-                    ],
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph("Reference:")],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(document.getElementById('poReference').value || '')],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph("Due Date:")],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(formatDate(document.getElementById('poDueDate').value) || '')],
-                        }),
-                    ],
-                }),
-            ];
-            
-            const poDetailsTable = new Table({
-                rows: poDetailsRows,
-                width: {
-                    size: 100,
-                    type: WidthType.PERCENTAGE,
-                },
-            });
-            
-            // Create addresses section
-            const addressesParagraphs = [
-                new Paragraph({
-                    text: "",
-                    spacing: {
-                        after: 200,
-                    },
-                }),
-                new Paragraph({
-                    text: "FROM:",
-                    heading: HeadingLevel.HEADING_3,
-                }),
-                new Paragraph(document.getElementById('companyName').value || 'Your Company'),
-                new Paragraph("VAT No: " + (document.getElementById('companyVat').value || '')),
-                new Paragraph({
-                    text: "Physical Address:",
-                    bold: true,
-                }),
-                new Paragraph(document.getElementById('companyPhysical').value || ''),
-                new Paragraph({
-                    text: "Postal Address:",
-                    bold: true,
-                }),
-                new Paragraph(document.getElementById('companyPostal').value || ''),
-                new Paragraph({
-                    text: "",
-                    spacing: {
-                        after: 200,
-                    },
-                }),
-                new Paragraph({
-                    text: "TO:",
-                    heading: HeadingLevel.HEADING_3,
-                }),
-                new Paragraph(document.getElementById('supplierName').value || 'Supplier Name'),
-                new Paragraph("VAT No: " + (document.getElementById('supplierVat').value || '')),
-                new Paragraph({
-                    text: "Physical Address:",
-                    bold: true,
-                }),
-                new Paragraph(document.getElementById('supplierPhysical').value || ''),
-                new Paragraph({
-                    text: "Postal Address:",
-                    bold: true,
-                }),
-                new Paragraph(document.getElementById('supplierPostal').value || ''),
-                new Paragraph({
-                    text: "",
-                    spacing: {
-                        after: 200,
-                    },
-                }),
-            ];
-            
-            // Create line items table headers
-            const lineItemsTableRows = [
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Description", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Qty", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Price", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Disc %", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "VAT %", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Total (Excl)", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Total (Incl)", bold: true })],
-                        }),
-                    ],
-                }),
-            ];
-            
-            // Add line items
-            const lineItems = document.querySelectorAll('.line-item');
-            lineItems.forEach(item => {
-                const description = item.querySelector('.item-description').value || 'Item Description';
-                const quantity = item.querySelector('.item-quantity').value || '1';
-                const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
-                const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
-                const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
-                const exclTotal = item.querySelector('.item-total-excl').textContent;
-                const inclTotal = item.querySelector('.item-total-incl').textContent;
+            try {
+                // Check if docx library is loaded correctly
+                if (typeof docx === 'undefined') {
+                    alert('Word export library is not loaded. Please check your internet connection and try again.');
+                    return;
+                }
                 
-                lineItemsTableRows.push(
-                    new TableRow({
+                // Create document using docx.js
+                const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, HeadingLevel } = docx;
+                
+                // Create document sections
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
                         children: [
-                            new TableCell({ children: [new Paragraph(description)] }),
-                            new TableCell({ children: [new Paragraph(quantity)] }),
-                            new TableCell({ children: [new Paragraph(price)] }),
-                            new TableCell({ children: [new Paragraph(discount)] }),
-                            new TableCell({ children: [new Paragraph(vat)] }),
-                            new TableCell({ children: [new Paragraph(exclTotal)] }),
-                            new TableCell({ children: [new Paragraph(inclTotal)] }),
-                        ],
-                    }),
-                );
-            });
-            
-            const lineItemsTable = new Table({
-                rows: lineItemsTableRows,
-                width: {
-                    size: 100,
-                    type: WidthType.PERCENTAGE,
-                },
-            });
-            
-            // Create totals table
-            const totalsTableRows = [
-                new TableRow({
+                            // Title
+                            new Paragraph({
+                                text: "PURCHASE ORDER",
+                                heading: HeadingLevel.HEADING_1,
+                                alignment: AlignmentType.CENTER,
+                            }),
+                            
+                            // Spacer
+                            new Paragraph({
+                                text: " ",
+                            }),
+                            
+                            // PO Details table
+                            new Table({
+                                width: {
+                                    size: 100,
+                                    type: WidthType.PERCENTAGE,
+                                },
+                                rows: [
+                                    new TableRow({
+                                        children: [
+                                            new TableCell({
+                                                children: [new Paragraph("PO Number:")],
+                                                width: {
+                                                    size: 25,
+                                                    type: WidthType.PERCENTAGE,
+                                                },
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph(document.getElementById('poNumber').value || '')],
+                                                width: {
+                                                    size: 25,
+                                                    type: WidthType.PERCENTAGE,
+                                                },
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph("Date:")],
+                                                width: {
+                                                    size: 25,
+                                                    type: WidthType.PERCENTAGE,
+                                                },
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph(formatDate(document.getElementById('poDate').value) || '')],
+                                                width: {
+                                                    size: 25,
+                                                    type: WidthType.PERCENTAGE,
+                                                },
+                                            }),
+                                        ],
+                                    }),
+                                    new TableRow({
+                                        children: [
+                                            new TableCell({
+                                                children: [new Paragraph("Reference:")],
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph(document.getElementById('poReference').value || '')],
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph("Due Date:")],
+                                            }),
+                                            new TableCell({
+                                                children: [new Paragraph(formatDate(document.getElementById('poDueDate').value) || '')],
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                            }),
+                            
+                            // Spacer
+                            new Paragraph({
+                                text: " ",
+                            }),
+                            
+                            // Company Info
+                            new Paragraph({
+                                text: "FROM:",
+                                heading: HeadingLevel.HEADING_3,
+                            }),
+                            new Paragraph(document.getElementById('companyName').value || 'Your Company'),
+                            new Paragraph(`VAT Number: ${document.getElementById('companyVat').value || ''}`),
+                            new Paragraph({
+                                text: "Physical Address:",
+                                bold: true,
+                            }),
+                            new Paragraph(document.getElementById('companyPhysical').value || ''),
+                            new Paragraph({
+                                text: "Postal Address:",
+                                bold: true,
+                            }),
+                            new Paragraph(document.getElementById('companyPostal').value || ''),
+                            
+                            // Spacer
+                            new Paragraph({
+                                text: " ",
+                            }),
+                            
+                            // Supplier Info
+                            new Paragraph({
+                                text: "TO:",
+                                heading: HeadingLevel.HEADING_3,
+                            }),
+                            new Paragraph(document.getElementById('supplierName').value || 'Supplier Name'),
+                            new Paragraph(`VAT Number: ${document.getElementById('supplierVat').value || ''}`),
+                            new Paragraph({
+                                text: "Physical Address:",
+                                bold: true,
+                            }),
+                            new Paragraph(document.getElementById('supplierPhysical').value || ''),
+                            new Paragraph({
+                                text: "Postal Address:",
+                                bold: true,
+                            }),
+                            new Paragraph(document.getElementById('supplierPostal').value || ''),
+                            
+                            // Spacer
+                            new Paragraph({
+                                text: " ",
+                            }),
+                        ]
+                    }]
+                });
+                
+                // Create line items table
+                const lineItemsTable = createLineItemsTable();
+                
+                // Create totals section
+                const totalsSection = createTotalsSection();
+                
+                // Add line items and totals to document
+                doc.addSection({
                     children: [
-                        new TableCell({ 
-                            children: [new Paragraph("Total Discount:")],
-                            width: { size: 50, type: WidthType.PERCENTAGE }
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(document.getElementById('totalDiscount').textContent)],
-                            width: { size: 50, type: WidthType.PERCENTAGE }
-                        }),
-                    ],
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph("Total Exclusive:")],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(document.getElementById('totalExclusive').textContent)],
-                        }),
-                    ],
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph("Total VAT:")],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph(document.getElementById('totalVAT').textContent)],
-                        }),
-                    ],
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ 
-                            children: [new Paragraph({ text: "Grand Total:", bold: true })],
-                        }),
-                        new TableCell({ 
-                            children: [new Paragraph({ text: document.getElementById('grandTotal').textContent, bold: true })],
-                        }),
-                    ],
-                }),
-            ];
-            
-            const totalsTable = new Table({
-                rows: totalsTableRows,
-                width: {
-                    size: 50,
-                    type: WidthType.PERCENTAGE,
-                },
-                alignment: AlignmentType.RIGHT,
-            });
-            
-            // Create final paragraphs
-            const finalParagraphs = [
-                new Paragraph({
-                    text: "",
-                    spacing: {
-                        after: 200,
-                    },
-                }),
-                new Paragraph({
-                    text: "BALANCE DUE",
-                    alignment: AlignmentType.CENTER,
-                    heading: HeadingLevel.HEADING_2,
-                }),
-                new Paragraph({
-                    text: document.getElementById('balanceDue').textContent,
-                    alignment: AlignmentType.CENTER,
-                    heading: HeadingLevel.HEADING_3,
-                }),
-            ];
-            
-            // Create document with all components
-            const doc = new Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        ...headerParagraphs,
-                        poDetailsTable,
-                        ...addressesParagraphs,
                         lineItemsTable,
-                        new Paragraph({ text: "", spacing: { after: 200 } }),
-                        totalsTable,
-                        ...finalParagraphs,
-                    ],
-                }],
-            });
+                        new Paragraph({ text: " " }),
+                        ...totalsSection,
+                        new Paragraph({ text: " " }),
+                        new Paragraph({
+                            text: "BALANCE DUE",
+                            alignment: AlignmentType.CENTER,
+                            heading: HeadingLevel.HEADING_2,
+                        }),
+                        new Paragraph({
+                            text: document.getElementById('balanceDue').textContent,
+                            alignment: AlignmentType.CENTER,
+                            bold: true,
+                        })
+                    ]
+                });
+                
+                // Generate and save document
+                docx.Packer.toBlob(doc)
+                    .then(blob => {
+                        saveAs(blob, `${poNumber}.docx`);
+                    })
+                    .catch(error => {
+                        console.error("Error generating Word document:", error);
+                        alert("There was an error generating the Word document. Please try again.");
+                    });
+            } catch (error) {
+                console.error("Error in Word export function:", error);
+                alert("There was an error generating the Word document. Please check the console for details.");
+            }
             
-            // Generate and save document
-            docx.Packer.toBlob(doc).then(blob => {
-                saveAs(blob, poNumber + ".docx");
-            });
-        });
-        
+            /**
+             * Helper function to create line items table
+             */
+            function createLineItemsTable() {
+                const { Table, TableRow, TableCell, Paragraph, BorderStyle } = docx;
+                
+                // Create table header row
+                const headerRow = new TableRow({
+                    tableHeader: true,
+                    children: [
+                        new TableCell({
+                            children: [new Paragraph({ text: "Description", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "Qty", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "Price", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "Disc %", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "VAT %", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "Total (Excl)", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "Total (Incl)", bold: true })],
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 1 },
+                                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                left: { style: BorderStyle.SINGLE, size: 1 },
+                                right: { style: BorderStyle.SINGLE, size: 1 },
+                            },
+                        }),
+                    ],
+                });
+                
+                // Get line items from the form
+                const lineItems = document.querySelectorAll('.line-item');
+                
+                // Create array to hold all rows
+                const rows = [headerRow];
+                
+                // Add line items rows
+                lineItems.forEach(item => {
+                    const description = item.querySelector('.item-description').value || 'Item Description';
+                    const quantity = item.querySelector('.item-quantity').value || '1';
+                    const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
+                    const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
+                    const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
+                    const exclTotal = item.querySelector('.item-total-excl').textContent;
+                    const inclTotal = item.querySelector('.item-total-incl').textContent;
+                    
+                    const row = new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [new Paragraph(description)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(quantity)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(price)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(discount)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(vat)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(exclTotal)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                            new TableCell({
+                                children: [new Paragraph(inclTotal)],
+                                borders: {
+                                    top: { style: BorderStyle.SINGLE, size: 1 },
+                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                    left: { style: BorderStyle.SINGLE, size: 1 },
+                                    right: { style: BorderStyle.SINGLE, size: 1 },
+                                },
+                            }),
+                        ],
+                    });
+                    
+                    rows.push(row);
+                });
+                
+                // Create and return table
+                return new Table({
+                    rows: rows,
+                    width: {
+                        size: 100,
+                        type: WidthType.PERCENTAGE,
+                    },
+                });
+            }
+            
+            /**
+             * Helper function to create totals section
+             */
+            function createTotalsSection() {
+                const { Table, TableRow, TableCell, Paragraph, BorderStyle, AlignmentType } = docx;
+                
+                // Create totals table
+                const totalsTable = new Table({
+                    width: {
+                        size: 50,
+                        type: WidthType.PERCENTAGE,
+                    },
+                    alignment: AlignmentType.RIGHT,
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph("Total Discount:")],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph(document.getElementById('totalDiscount').textContent)],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph("Total Exclusive:")],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph(document.getElementById('totalExclusive').textContent)],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph("Total VAT:")],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph(document.getElementById('totalVAT').textContent)],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({ text: "Grand Total:", bold: true })],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({ text: document.getElementById('grandTotal').textContent, bold: true })],
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1 },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
+                                        left: { style: BorderStyle.SINGLE, size: 1 },
+                                        right: { style: BorderStyle.SINGLE, size: 1 },
+                                    },
+                                }),
+                            ],
+                        }),
+                    ],
+                });
+                
+                return [totalsTable];
+            }
+        });        
+
         // Generate Excel
         document.getElementById('generateExcelBtn').addEventListener('click', function() {
             const poNumber = document.getElementById('poNumber').value || 'purchase-order';
