@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Easy Quote</title>
+
+<!-- FAVICON -->
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="shortcut icon" href="icon.png">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+<style>
+@media print {
+  nav, .no-print, button, select {
+    display:none !important;
+  }
+  body { background:white; }
+}
+</style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<nav class="bg-blue-600 text-white py-4 no-print">
+  <div class="container mx-auto px-4 flex items-center gap-4">
+    <a href="index.html" class="font-bold text-xl">Easy Suite</a>
+  </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8">
+
+<div class="bg-white p-8 rounded shadow">
+
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h1 class="text-3xl font-bold">QUOTE</h1>
+    <div class="text-sm text-gray-600">
+      Status:
+      <select id="status" class="border px-2 py-1">
+        <option>Draft</option>
+        <option>Sent</option>
+        <option>Accepted</option>
+        <option>Rejected</option>
+      </select>
+    </div>
+  </div>
+  <div class="text-sm">
+    Quote No:
+    <input id="quoteNo" class="border px-2 py-1 w-32">
+    <br>
+    Date:
+    <input type="date" id="quoteDate" class="border px-2 py-1">
+    <br>
+    Valid Until:
+    <input type="date" id="validDate" class="border px-2 py-1">
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div>
+    <h2 class="font-semibold mb-2">Client</h2>
+    <textarea id="client" class="w-full border p-2 h-28"></textarea>
+  </div>
+  <div>
+    <h2 class="font-semibold mb-2">Company</h2>
+    <textarea id="company" class="w-full border p-2 h-28"></textarea>
+  </div>
+</div>
+
+<div class="overflow-x-auto mb-4">
+<table class="w-full text-sm border" id="itemsTable">
+<thead class="bg-gray-200">
+<tr>
+<th class="p-2 border">Description</th>
+<th class="p-2 border">Qty</th>
+<th class="p-2 border">Unit</th>
+<th class="p-2 border">Total</th>
+<th class="p-2 border no-print">X</th>
+</tr>
+</thead>
+<tbody id="itemsBody"></tbody>
+</table>
+</div>
+
+<div class="mb-4 no-print">
+<button onclick="addRow()" class="bg-blue-600 text-white px-4 py-2 rounded">
++ Add Item
+</button>
+</div>
+
+<div class="flex justify-end">
+<div class="w-full md:w-1/3 text-sm">
+
+<div class="flex justify-between mb-2">
+Currency:
+<select id="currency" class="border px-2 py-1">
+<option value="R">R (ZAR)</option>
+<option value="$">$ (USD)</option>
+<option value="€">€ (EUR)</option>
+</select>
+</div>
+
+<div class="flex justify-between mb-2">
+<span>Subtotal:</span>
+<span id="subtotal">0.00</span>
+</div>
+
+<div class="flex justify-between mb-2">
+Discount:
+<input type="number" id="discount" value="0" class="border w-24 text-right">
+</div>
+
+<div class="flex justify-between mb-2">
+VAT %:
+<input type="number" id="vatRate" value="15" class="border w-16 text-right">
+</div>
+
+<div class="flex justify-between font-bold text-lg border-t pt-2">
+<span>Total:</span>
+<span id="grandTotal">0.00</span>
+</div>
+
+</div>
+</div>
+
+<div class="mt-6">
+<h2 class="font-semibold mb-2">Notes / Terms</h2>
+<textarea id="notes" class="w-full border p-2 h-24"></textarea>
+</div>
+
+<div class="mt-6 flex gap-4 no-print flex-wrap">
+<button onclick="calculateTotals()" class="bg-green-600 text-white px-4 py-2 rounded">
+Recalculate
+</button>
+
+<button onclick="saveQuote()" class="bg-indigo-600 text-white px-4 py-2 rounded">
+Save Quote
+</button>
+
+<button onclick="loadQuote()" class="bg-yellow-600 text-white px-4 py-2 rounded">
+Load Saved
+</button>
+
+<button onclick="deleteQuote()" class="bg-red-600 text-white px-4 py-2 rounded">
+Delete
+</button>
+
+<button onclick="exportJSON()" class="bg-gray-700 text-white px-4 py-2 rounded">
+Export JSON
+</button>
+
+<button onclick="window.print()" class="bg-black text-white px-4 py-2 rounded">
+Print / PDF
+</button>
+</div>
+
+</div>
+</main>
+
+<script>
+
+function generateQuoteNumber() {
+  let counter = localStorage.getItem("quoteCounter") || 1;
+  document.getElementById("quoteNo").value = "Q-" + String(counter).padStart(4,'0');
+  localStorage.setItem("quoteCounter", ++counter);
+}
+
+function addRow() {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td class="border p-2"><input class="w-full desc"></td>
+    <td class="border p-2"><input type="number" value="1" class="qty w-20"></td>
+    <td class="border p-2"><input type="number" value="0" class="unit w-24"></td>
+    <td class="border p-2 total">0.00</td>
+    <td class="border p-2 no-print">
+      <button onclick="this.closest('tr').remove();calculateTotals();" class="text-red-600">✕</button>
+    </td>`;
+  document.getElementById("itemsBody").appendChild(row);
+}
+
+function calculateTotals() {
+  let subtotal = 0;
+  document.querySelectorAll("#itemsBody tr").forEach(row=>{
+    let qty = parseFloat(row.querySelector(".qty").value)||0;
+    let unit = parseFloat(row.querySelector(".unit").value)||0;
+    let total = qty*unit;
+    row.querySelector(".total").innerText = total.toFixed(2);
+    subtotal += total;
+  });
+
+  let discount = parseFloat(document.getElementById("discount").value)||0;
+  let vatRate = parseFloat(document.getElementById("vatRate").value)||0;
+  let vat = (subtotal-discount)*(vatRate/100);
+  let grand = subtotal-discount+vat;
+
+  let symbol = document.getElementById("currency").value;
+
+  document.getElementById("subtotal").innerText = symbol+" "+subtotal.toFixed(2);
+  document.getElementById("grandTotal").innerText = symbol+" "+grand.toFixed(2);
+}
+
+function saveQuote() {
+  let data = collectData();
+  localStorage.setItem("savedQuote", JSON.stringify(data));
+  alert("Quote Saved");
+}
+
+function loadQuote() {
+  let data = JSON.parse(localStorage.getItem("savedQuote"));
+  if(!data) return alert("No saved quote");
+  populateData(data);
+}
+
+function deleteQuote() {
+  localStorage.removeItem("savedQuote");
+  alert("Deleted");
+}
+
+function exportJSON() {
+  let data = collectData();
+  let blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = document.getElementById("quoteNo").value+".json";
+  link.click();
+}
+
+function collectData() {
+  let items=[];
+  document.querySelectorAll("#itemsBody tr").forEach(row=>{
+    items.push({
+      desc:row.querySelector(".desc").value,
+      qty:row.querySelector(".qty").value,
+      unit:row.querySelector(".unit").value
+    });
+  });
+  return {
+    quoteNo:quoteNo.value,
+    date:quoteDate.value,
+    valid:validDate.value,
+    client:client.value,
+    company:company.value,
+    items:items,
+    discount:discount.value,
+    vatRate:vatRate.value,
+    notes:notes.value
+  };
+}
+
+function populateData(data){
+  quoteNo.value=data.quoteNo;
+  quoteDate.value=data.date;
+  validDate.value=data.valid;
+  client.value=data.client;
+  company.value=data.company;
+  discount.value=data.discount;
+  vatRate.value=data.vatRate;
+  notes.value=data.notes;
+
+  itemsBody.innerHTML="";
+  data.items.forEach(item=>{
+    addRow();
+    let row=itemsBody.lastChild;
+    row.querySelector(".desc").value=item.desc;
+    row.querySelector(".qty").value=item.qty;
+    row.querySelector(".unit").value=item.unit;
+  });
+  calculateTotals();
+}
+
+document.addEventListener("input",calculateTotals);
+
+generateQuoteNumber();
+addRow();
+calculateTotals();
+
+</script>
+
+</body>
+</html>
