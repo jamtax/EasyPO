@@ -13,11 +13,8 @@
   <!-- Tailwind CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
+  <!-- Libraries removed -->
+  <!-- External PDF/Excel/Word libraries have been removed to ensure the page functions offline.  -->
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -593,10 +590,18 @@
   // ===========================
   // Helpers
   // ===========================
+  // In production, avoid global alert handlers. Errors will be logged via
+  // console.error instead of interrupting the user with pop‑up messages.
+  // window.onerror is intentionally left undefined here.
   const $ = (id) => document.getElementById(id);
 
   function escapeHtml(str){
-    return (str || "").replace(/[&<>"']/g, m => ({
+    // Convert the input to a string before replacing to avoid errors when
+    // non‑string values (e.g. numbers) are passed.  Using String() ensures
+    // that truthy non‑string values like numbers or booleans are coerced to
+    // strings, and that undefined/null becomes an empty string.  Without this
+    // conversion, calling `.replace` on a number would throw an error.
+    return String(str || "").replace(/[&<>"']/g, m => ({
       "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
     }[m]));
   }
@@ -608,6 +613,30 @@
       case "GBP": return "£";
       case "ZAR":
       default: return "R";
+    }
+  }
+
+  // Simple file saver helper.  Replaces the external FileSaver.js dependency.
+  // Creates a download link for the provided blob and triggers a click so the
+  // browser prompts the user to save the file.  Afterwards the link and
+  // object URL are cleaned up.  This keeps downloads working offline.
+  function saveAs(blob, filename){
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      // Give the browser a tick to register the click before cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    } catch (err) {
+      console.error(err);
+      alert('Download failed. Your browser may not support programmatic downloads.');
     }
   }
 
@@ -920,58 +949,17 @@
   // Exports
   // ===========================
   function exportPDF(){
-    // ensure preview dom exists
-    const dom = buildTemplateDom();
-
-    // wrap offscreen for stable rendering
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "absolute";
-    wrapper.style.left = "-9999px";
-    wrapper.style.top = "0";
-    wrapper.style.width = "210mm";
-    wrapper.appendChild(dom);
-    document.body.appendChild(wrapper);
-
-    const filename = ($("invoiceNumber").value || "invoice") + ".pdf";
-
-    const opt = {
-      margin: [10,10,10,10],
-      filename,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        letterRendering: true,
-        allowTaint: true,
-        foreignObjectRendering: true
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true }
-    };
-
-    const loading = document.createElement("div");
-    loading.textContent = "Generating PDF...";
-    loading.style.position = "fixed";
-    loading.style.left = "50%";
-    loading.style.top = "50%";
-    loading.style.transform = "translate(-50%, -50%)";
-    loading.style.background = "rgba(0,0,0,.75)";
-    loading.style.color = "white";
-    loading.style.padding = "14px 18px";
-    loading.style.borderRadius = "10px";
-    loading.style.zIndex = "9999";
-    document.body.appendChild(loading);
-
-    html2pdf().set(opt).from(wrapper).save()
-      .then(()=>{
-        document.body.removeChild(wrapper);
-        document.body.removeChild(loading);
-      })
-      .catch(err=>{
-        console.error(err);
-        alert("PDF export failed. Check console for details.");
-        document.body.removeChild(wrapper);
-        document.body.removeChild(loading);
-      });
+    // PDF export fallback: open the print dialog on the preview.  We
+    // generate the preview (which already lays out the invoice in a
+    // print‑friendly format) and then invoke the browser's native print
+    // function.  Users can select "Save as PDF" in the print dialog to
+    // generate a PDF.  This approach avoids reliance on external
+    // libraries and works offline across modern browsers.
+    openPreview();
+    // Give the modal a moment to render before printing
+    setTimeout(() => {
+      window.print();
+    }, 100);
   }
 
   function exportCSV(){
@@ -994,67 +982,42 @@
     saveAs(blob, filename);
   }
 
+  // Excel export rewritten to avoid external dependencies.  This version
+  // generates a simple HTML table wrapped in an Excel-compatible file
+  // structure and saves it with a .xls extension.  Modern versions of
+  // Excel will open this file without issues.  Note: this is a basic
+  // representation and may not support all Excel features.
   function exportExcel(){
-    const wb = XLSX.utils.book_new();
-
-    const meta = [
-      ["INVOICE"],
-      [""],
-      ["Invoice #", $("invoiceNumber").value || ""],
-      ["Reference", $("invoiceReference").value || ""],
-      ["Issue Date", formatDateISO($("invoiceDate").value)],
-      ["Due Date", formatDateISO($("dueDate").value)],
-      ["Status", ($("invoiceStatus").value || "").toUpperCase()],
-      ["Currency", $("currency").value || "ZAR"],
-      [""],
-      ["Company", $("companyName").value || ""],
-      ["Company VAT", $("companyVat").value || ""],
-      ["Company Address", $("companyAddress").value || ""],
-      ["Company Email", $("companyEmail").value || ""],
-      ["Company Phone", $("companyPhone").value || ""],
-      [""],
-      ["Client", $("clientName").value || ""],
-      ["Client VAT", $("clientVat").value || ""],
-      ["Client Address", $("clientAddress").value || ""],
-      ["Client Email", $("clientEmail").value || ""],
-      ["Client Phone", $("clientPhone").value || ""],
-      [""]
-    ];
-
-    const items = readLineItems();
-    const itemsHeader = [["Description","Qty","Rate (Excl)","Disc %","VAT %","Total Excl","Total Incl"]];
-    const itemsRows = items.map(i=>{
-      const base = i.qty*i.rate;
-      const discAmt = base*(i.disc/100);
-      const excl = Math.max(0, base-discAmt);
-      const vatAmt = excl*(i.vat/100);
-      const incl = excl+vatAmt;
-      return [i.desc || "", i.qty, i.rate, i.disc, i.vat, excl, incl];
-    });
-
-    const t = calculateTotals();
-    const totals = [
-      [""],
-      ["Subtotal", t.subtotalExcl],
-      ["Line Discounts", t.lineDiscountTotal],
-      ["Overall Discount", t.overallDiscountAmt],
-      ["VAT", t.vat],
-      ["Shipping", t.shipping],
-      ["Grand Total", t.grand],
-      ["Paid", t.paid],
-      ["Balance Due", t.balance]
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet([...meta, ...itemsHeader, ...itemsRows, ...totals]);
-    XLSX.utils.book_append_sheet(wb, ws, "Invoice");
-    XLSX.writeFile(wb, ($("invoiceNumber").value || "invoice") + ".xlsx");
+    try {
+      const templateDom = buildTemplateDom();
+      // Clone the template DOM so we can tweak it without affecting the preview
+      const clone = templateDom.cloneNode(true);
+      // Build a wrapper table containing the invoice content.  We'll
+      // surround the entire invoice in a single table cell to preserve
+      // layout.  Excel interprets HTML tables directly.
+      const wrapperTable = document.createElement('table');
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.appendChild(clone);
+      tr.appendChild(td);
+      wrapperTable.appendChild(tr);
+      // Serialize to HTML
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${wrapperTable.outerHTML}</body></html>`;
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+      const filename = ($("invoiceNumber").value || 'invoice') + '.xls';
+      saveAs(blob, filename);
+    } catch (err) {
+      console.error(err);
+      alert('Excel export failed.');
+    }
   }
 
-  function exportWord(){
-    if (typeof docx === "undefined") {
-      alert("Word export library not loaded. Check connectivity and try again.");
-      return;
-    }
+  function _exportWordOld(){
+    // This legacy Word export relied on the external `docx` library. It's deprecated to
+    // ensure offline functionality. Return early and advise the user to use the new
+    // `Export Word` button which uses the offline HTML-to-Doc fallback.
+    alert("This legacy Word export is deprecated. Please use the Export Word button instead.");
+    return;
 
     const { Document, Paragraph, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = docx;
 
@@ -1188,6 +1151,28 @@
         console.error(err);
         alert("Word export failed. Check console for details.");
       });
+  }
+
+  // New Word export using HTML to doc fallback. This implementation works offline without external
+  // dependencies by serializing the invoice HTML into a simple .doc file. Modern versions of
+  // Microsoft Word can open HTML content saved with a .doc extension.
+  function exportWord(){
+    try {
+      // Build the invoice template DOM
+      const dom = buildTemplateDom();
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(dom);
+      // Serialize the DOM into a complete HTML document string
+      const htmlContent = `<!DOCTYPE html><html lang="en-ZA"><head><meta charset="UTF-8"><title>Invoice</title></head><body>${wrapper.innerHTML}</body></html>`;
+      // Create a Word document blob from the HTML content
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const filename = ($("invoiceNumber").value || 'invoice') + '.doc';
+      // Trigger the download
+      saveAs(blob, filename);
+    } catch (err) {
+      console.error(err);
+      alert('Word export failed.');
+    }
   }
 
   // ===========================
