@@ -1,1380 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-ZA">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyPO - Simple Purchase Order Generator</title>
-    <meta name="description" content="Create beautiful purchase orders in seconds. Free, easy, and professional.">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/jamtax/EasyPO/867b12cd282071070aaa18bb02f27914d94e1150/assets/easypo-favicon.svg">
-    
-    <!-- Tailwind CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    
-    <!-- Required Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
-    
-    <!-- Additional script to verify library loading -->
-    <script>
-      // Check if libraries are loaded correctly
-      window.addEventListener('load', function() {
-        // Check docx.js
-        if (typeof docx === 'undefined') {
-          console.error('docx.js library failed to load');
-          // Attempt to reload it
-          var script = document.createElement('script');
-          script.src = 'https://unpkg.com/docx@7.8.2/build/index.js';
-          script.onload = function() {
-            console.log('docx.js loaded from fallback source');
-            window.docxLoaded = true;
-          };
-          document.head.appendChild(script);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Suite Dashboard</title>
+  <meta name="description" content="Dashboard for Easy Suite – quickly access modules like quotes, invoices, orders, receipts and more.">
+  <!-- TailwindCSS via CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* Basic styling for module cards */
+    .module-card {
+      transition: transform 0.2s ease;
+    }
+    .module-card:hover {
+      transform: translateY(-3px);
+    }
+  </style>
+  <script>
+    // Filter cards based on search input on the dashboard
+    function filterCards() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const cards = document.querySelectorAll('.module-card');
+      cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        if (name.includes(query)) {
+          card.classList.remove('hidden');
         } else {
-          console.log('docx.js loaded successfully');
-          window.docxLoaded = true;
+          card.classList.add('hidden');
         }
       });
-    </script>
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom Styles -->
-    <style>
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .print-only {
-                display: block !important;
-            }
-        }
-        
-        /* Mobile optimizations */
-        @media (max-width: 640px) {
-            .mobile-full {
-                width: 100% !important;
-            }
-            .mobile-stack {
-                flex-direction: column !important;
-            }
-            .mobile-mt-4 {
-                margin-top: 1rem !important;
-            }
-            .mobile-text-sm {
-                font-size: 0.875rem !important;
-            }
-            .mobile-px-2 {
-                padding-left: 0.5rem !important;
-                padding-right: 0.5rem !important;
-            }
-        }
-        
-        /* Smooth transitions */
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-        
-        /* Better input focus styles */
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-        }
-        
-        /* Responsive table styles */
-        .responsive-table {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        /* WhatsApp button */
-        .whatsapp-btn {
-            background-color: #25D366;
-            color: white;
-            border-radius: 50px;
-            padding: 0.5rem 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .whatsapp-btn:hover {
-            background-color: #128C7E;
-            transform: translateY(-2px);
-        }
-    </style>
+    }
+  </script>
 </head>
-
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="bg-white shadow-sm py-4 px-4 sm:px-6 no-print">
-        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
-            <div class="flex items-center mb-4 sm:mb-0">
-                <img src="https://raw.githubusercontent.com/jamtax/EasyPO/867b12cd282071070aaa18bb02f27914d94e1150/assets/easypo-logo.svg" alt="EasyPO Logo" class="h-10 mr-3">
-                <div>
-                    <h1 class="text-2xl font-bold text-indigo-700">EasyPO</h1>
-                    <p class="text-gray-600 text-sm">Simple Purchase Order Generator</p>
-                </div>
-            </div>
-            <div class="flex space-x-4">
-                <a href="https://github.com/jamtax/EasyPO" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center">
-                    <i class="fab fa-github mr-1"></i> GitHub
-                </a>
-                <a href="https://github.com/jamtax/EasyPO/issues" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center">
-                    <i class="fas fa-bug mr-1"></i> Report Issue
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-6 md:py-8">
-        <!-- Quick Tour / Tips -->
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded shadow-sm no-print">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-info-circle text-blue-500"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">Quick Tips</h3>
-                    <div class="mt-2 text-sm text-blue-700">
-                        <p>1. Fill in your company and supplier information</p>
-                        <p>2. Add your line items with quantities and prices</p>
-                        <p>3. Preview your PO before exporting</p>
-                        <p>4. Export in your preferred format (PDF, Word, Excel)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- PO Form -->
-        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
-            <!-- Company & Supplier Information -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Company Information -->
-                <div class="space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-building mr-2 text-indigo-600"></i> Company Information
-                    </h2>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Logo</label>
-                            <input type="file" id="companyLogo" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" onchange="previewLogo(event)">
-                            <div id="logoPreview" class="mt-2 h-16 flex items-center">
-                                <p class="text-gray-500 text-sm">No logo uploaded</p>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyName">Company Name</label>
-                            <input type="text" id="companyName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Your Company Name">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyVat">VAT Number</label>
-                            <input type="text" id="companyVat" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 4080141999">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyPhysical">Physical Address</label>
-                            <textarea id="companyPhysical" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Your company's physical address"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="companyPostal">Postal Address</label>
-                            <textarea id="companyPostal" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Your company's postal address"></textarea>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Supplier Information -->
-                <div class="space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-truck-loading mr-2 text-indigo-600"></i> Supplier Information
-                    </h2>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierName">Supplier Name</label>
-                            <input type="text" id="supplierName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Supplier Company Name">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierVat">Supplier VAT Number</label>
-                            <input type="text" id="supplierVat" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Supplier VAT Number">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierPhysical">Supplier Physical Address</label>
-                            <textarea id="supplierPhysical" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Supplier's physical address"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="supplierPostal">Supplier Postal Address</label>
-                            <textarea id="supplierPostal" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Supplier's postal address"></textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Purchase Order Details -->
-            <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
-                    <i class="fas fa-file-invoice mr-2 text-indigo-600"></i> Purchase Order Details
-                </h2>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poNumber">PO Number</label>
-                        <input type="text" id="poNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., PO0000002">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poReference">Reference</label>
-                        <input type="text" id="poReference" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., SO0000027">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poDate">Date</label>
-                        <input type="date" id="poDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="poDueDate">Due Date</label>
-                        <input type="date" id="poDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                </div>
-                
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1" for="overallDiscount">Overall Discount %</label>
-                    <input type="number" id="overallDiscount" class="w-full sm:w-1/4 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="0.00" min="0" max="100" step="0.01" value="0.00">
-                </div>
-            </div>
-            
-            <!-- Line Items -->
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
-                    <i class="fas fa-list mr-2 text-indigo-600"></i> Line Items
-                </h3>
-                
-                <div class="responsive-table mb-4">
-                    <table class="w-full border-collapse" id="lineItemsTable">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="border border-gray-300 p-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Qty</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Price (Excl.)</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Disc %</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">VAT %</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Total (Excl.)</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Total (Incl.)</th>
-                                <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lineItemsBody">
-                            <!-- Line items will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <button id="addLineItem" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-all flex items-center">
-                    <i class="fas fa-plus mr-2"></i> Add Line Item
-                </button>
-            </div>
-            
-            <!-- Totals -->
-            <div class="mb-6">
-                <div class="flex justify-end">
-                    <div class="w-full sm:w-1/2 md:w-1/3">
-                        <div class="flex justify-between border-t border-gray-200 pt-2">
-                            <span class="font-medium text-gray-700">Total Discount:</span>
-                            <span id="totalDiscount" class="text-gray-900">R0.00</span>
-                        </div>
-                        <div class="flex justify-between border-t border-gray-200 pt-2">
-                            <span class="font-medium text-gray-700">Total Exclusive:</span>
-                            <span id="totalExclusive" class="text-gray-900">R0.00</span>
-                        </div>
-                        <div class="flex justify-between border-t border-gray-200 pt-2">
-                            <span class="font-medium text-gray-700">Total VAT:</span>
-                            <span id="totalVAT" class="text-gray-900">R0.00</span>
-                        </div>
-                        <div class="flex justify-between border-t border-b border-gray-200 py-2 font-bold">
-                            <span class="text-gray-900">Grand Total:</span>
-                            <span id="grandTotal" class="text-gray-900">R0.00</span>
-                        </div>
-                        <div class="flex justify-between border-b border-gray-200 py-2 mt-4 font-bold text-lg">
-                            <span class="text-gray-900">BALANCE DUE</span>
-                            <span id="balanceDue" class="text-gray-900">R0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-3 justify-center">
-                <button id="previewBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-all flex items-center">
-                    <i class="fas fa-eye mr-2"></i> Preview
-                </button>
-                <button id="generatePDFBtn" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition-all flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i> Export as PDF
-                </button>
-                <button id="generateWordBtn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-all flex items-center">
-                    <i class="fas fa-file-word mr-2"></i> Export as Word
-                </button>
-                <button id="generateExcelBtn" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-all flex items-center">
-                    <i class="fas fa-file-excel mr-2"></i> Export as Excel
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 px-4 no-print">
-        <div class="container mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <p class="text-center md:text-left">
-                        Skunkworks Digital | <a href="mailto:info@skunkworksdigital.co.za" class="text-indigo-300 hover:text-indigo-200">info@skunkworksdigital.co.za</a>
-                    </p>
-                </div>
-                <div>
-                    <a href="https://wa.me/27686493591" class="whatsapp-btn" target="_blank">
-                        <i class="fab fa-whatsapp"></i> WhatsApp Chat
-                    </a>
-                </div>
-            </div>
-            <div class="mt-4 text-center text-gray-400 text-sm">
-                <p>© 2025 Skunkworks Digital. All rights reserved.</p>
-                <p class="mt-1">Made with <span class="text-red-400">❤</span> in South Africa</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Preview Modal -->
-    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 no-print">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-screen overflow-y-auto">
-            <div class="p-4 flex justify-between items-center border-b border-gray-200">
-                <h2 class="text-xl font-bold text-gray-900">Purchase Order Preview</h2>
-                <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div id="previewContent" class="p-6"></div>
-            <div class="p-4 border-t border-gray-200 flex justify-end">
-                <button id="closePreviewBtnBottom" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-all">
-                    Close Preview
-                </button>
-            </div>
-        </div>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Navigation Bar -->
+  <nav class="bg-blue-600 text-white py-4">
+    <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
+      <a href="index.html" class="font-bold text-xl mr-4">Easy&nbsp;Suite</a>
+      <a href="easy-quote.html" class="hover:underline">Quote</a>
+      <a href="easy-invoice.html" class="hover:underline">Invoice</a>
+      <a href="easy-purchase-order.html" class="hover:underline">Purchase&nbsp;Order</a>
+      <a href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
+      <a href="easy-reciept.html" class="hover:underline">Receipt</a>
+      <a href="easy-statement.html" class="hover:underline">Statement</a>
+      <a href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
+      <a href="easy-payroll.html" class="hover:underline">Payroll</a>
+      <a href="easy-inventory.html" class="hover:underline">Inventory</a>
+      <a href="easy-crm.html" class="hover:underline">CRM</a>
+      <!-- Search box only on index -->
+      <input id="search" type="text" placeholder="Search modules…" oninput="filterCards()"
+             class="ml-auto px-3 py-1 rounded text-gray-800" />
     </div>
-    
-    <!-- Purchase Order Template (for Preview and Export) -->
-    <div id="purchaseOrderTemplate" class="hidden">
-        <div class="purchase-order-container p-6 max-w-4xl mx-auto bg-white">
-            <div class="flex flex-col sm:flex-row justify-between items-start mb-8">
-                <div class="logo-container mb-4 sm:mb-0" id="templateLogo"></div>
-                <div class="text-right">
-                    <h1 class="text-2xl font-bold mb-2">PURCHASE ORDER</h1>
-                    <div class="grid grid-cols-2 gap-x-2 text-sm">
-                        <span class="text-right font-semibold">NUMBER:</span>
-                        <span id="templatePoNumber"></span>
-                        
-                        <span class="text-right font-semibold">REFERENCE:</span>
-                        <span id="templatePoReference"></span>
-                        
-                        <span class="text-right font-semibold">DATE:</span>
-                        <span id="templatePoDate"></span>
-                        
-                        <span class="text-right font-semibold">DUE DATE:</span>
-                        <span id="templatePoDueDate"></span>
-                        
-                        <span class="text-right font-semibold">OVERALL DISCOUNT %:</span>
-                        <span id="templateOverallDiscount"></span>
-                        
-                        <span class="text-right font-semibold">PAGE:</span>
-                        <span>1/1</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex flex-col sm:flex-row justify-between mb-8">
-                <div class="w-full sm:w-1/2 pr-0 sm:pr-4 mb-4 sm:mb-0">
-                    <h2 class="font-bold mb-2">FROM</h2>
-                    <div id="templateCompanyName" class="font-semibold"></div>
-                    <div class="text-sm">
-                        <div>VAT NO: <span id="templateCompanyVat"></span></div>
-                        <div class="mt-2">
-                            <div class="font-semibold">PHYSICAL ADDRESS:</div>
-                            <div id="templateCompanyPhysical" style="white-space: pre-line;"></div>
-                        </div>
-                        <div class="mt-2">
-                            <div class="font-semibold">POSTAL ADDRESS:</div>
-                            <div id="templateCompanyPostal" style="white-space: pre-line;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="w-full sm:w-1/2 pl-0 sm:pl-4">
-                    <h2 class="font-bold mb-2">TO</h2>
-                    <div id="templateSupplierName" class="font-semibold"></div>
-                    <div class="text-sm">
-                        <div>SUPPLIER VAT NO: <span id="templateSupplierVat"></span></div>
-                        <div class="mt-2">
-                            <div class="font-semibold">PHYSICAL ADDRESS:</div>
-                            <div id="templateSupplierPhysical" style="white-space: pre-line;"></div>
-                        </div>
-                        <div class="mt-2">
-                            <div class="font-semibold">POSTAL ADDRESS:</div>
-                            <div id="templateSupplierPostal" style="white-space: pre-line;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="responsive-table mb-6">
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="border border-gray-300 p-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Qty</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Excl. Price</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Disc %</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">VAT %</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Excl. Total</th>
-                            <th class="border border-gray-300 p-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Incl. Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="templateLineItems">
-                        <!-- Line items will be added here -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="flex justify-end mb-6">
-                <div class="w-full sm:w-1/2 md:w-1/3">
-                    <div class="flex justify-between border-t border-gray-200 pt-2">
-                        <span class="font-medium text-gray-700">Total Discount:</span>
-                        <span id="templateTotalDiscount"></span>
-                    </div>
-                    <div class="flex justify-between border-t border-gray-200 pt-2">
-                        <span class="font-medium text-gray-700">Total Exclusive:</span>
-                        <span id="templateTotalExclusive"></span>
-                    </div>
-                    <div class="flex justify-between border-t border-gray-200 pt-2">
-                        <span class="font-medium text-gray-700">Total VAT:</span>
-                        <span id="templateTotalVAT"></span>
-                    </div>
-                    <div class="flex justify-between border-t border-b border-gray-200 py-2 font-bold">
-                        <span class="text-gray-900">Grand Total:</span>
-                        <span id="templateGrandTotal"></span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center font-bold text-xl">
-                <div>BALANCE DUE</div>
-                <div id="templateBalanceDue"></div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Initialize the current date for date inputs
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('poDate').value = today;
-            
-            // Set due date to 10 days from today by default
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 10);
-            document.getElementById('poDueDate').value = dueDate.toISOString().split('T')[0];
-            
-            // Generate a unique PO number
-            const poNumber = 'PO' + Math.floor(Math.random() * 1000000).toString().padStart(7, '0');
-            document.getElementById('poNumber').value = poNumber;
-            
-            // Add first line item
-            addLineItem();
-            
-            // Set up preview modal close buttons
-            document.getElementById('closePreviewBtn').addEventListener('click', closePreviewModal);
-            document.getElementById('closePreviewBtnBottom').addEventListener('click', closePreviewModal);
-            
-            // Handle clicks outside the modal to close it
-            document.getElementById('previewModal').addEventListener('click', function(event) {
-                if (event.target === this) {
-                    closePreviewModal();
-                }
-            });
-        });
-        
-        function closePreviewModal() {
-            document.getElementById('previewModal').classList.add('hidden');
-        }
-        
-        // Logo preview
-        function previewLogo(event) {
-            const preview = document.getElementById('logoPreview');
-            preview.innerHTML = '';
-            
-            if (event.target.files && event.target.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'h-full object-contain';
-                    preview.appendChild(img);
-                }
-                
-                reader.readAsDataURL(event.target.files[0]);
-            }
-        }
-        
-        // Line item functionality
-        let lineItemCount = 0;
-        
-        document.getElementById('addLineItem').addEventListener('click', function() {
-            addLineItem();
-            calculateTotals();
-        });
-        
-        function addLineItem() {
-            const lineItemsBody = document.getElementById('lineItemsBody');
-            const rowId = 'item-' + lineItemCount++;
-            
-            const row = document.createElement('tr');
-            row.id = rowId;
-            row.className = 'line-item';
-            row.innerHTML = `
-                <td class="border border-gray-300 p-2">
-                    <input type="text" class="w-full px-2 py-1 border rounded-md item-description" placeholder="Item description">
-                </td>
-                <td class="border border-gray-300 p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-quantity" min="1" value="1">
-                </td>
-                <td class="border border-gray-300 p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-price" min="0" step="0.01" value="0.00">
-                </td>
-                <td class="border border-gray-300 p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-discount" min="0" max="100" step="0.01" value="0.00">
-                </td>
-                <td class="border border-gray-300 p-2">
-                    <input type="number" class="w-full px-2 py-1 border rounded-md text-center item-vat" min="0" max="100" step="0.01" value="15.00">
-                </td>
-                <td class="border border-gray-300 p-2 text-right item-total-excl">R0.00</td>
-                <td class="border border-gray-300 p-2 text-right item-total-incl">R0.00</td>
-                <td class="border border-gray-300 p-2 text-center">
-                    <button class="text-red-600 hover:text-red-800 delete-item" aria-label="Delete item">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
-            `;
-            
-            lineItemsBody.appendChild(row);
-            
-            // Add event listeners to new row
-            const newRow = document.getElementById(rowId);
-            
-            // Delete button
-            newRow.querySelector('.delete-item').addEventListener('click', function() {
-                row.remove();
-                calculateTotals();
-            });
-            
-            // Recalculate on input change
-            const inputs = newRow.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('input', calculateTotals);
-            });
-        }
-        
-        // Calculate totals
-        function calculateTotals() {
-            const lineItems = document.querySelectorAll('.line-item');
-            let totalDiscount = 0;
-            let totalExclusive = 0;
-            let totalVAT = 0;
-            let grandTotal = 0;
-            
-            lineItems.forEach(item => {
-                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
-                const price = parseFloat(item.querySelector('.item-price').value) || 0;
-                const discount = parseFloat(item.querySelector('.item-discount').value) || 0;
-                const vat = parseFloat(item.querySelector('.item-vat').value) || 0;
-                
-                // Calculate line totals
-                const discountAmount = (price * quantity) * (discount / 100);
-                const exclTotal = (price * quantity) - discountAmount;
-                const vatAmount = exclTotal * (vat / 100);
-                const inclTotal = exclTotal + vatAmount;
-                
-                // Update line total cells
-                item.querySelector('.item-total-excl').textContent = formatCurrency(exclTotal);
-                item.querySelector('.item-total-incl').textContent = formatCurrency(inclTotal);
-                
-                // Add to running totals
-                totalDiscount += discountAmount;
-                totalExclusive += exclTotal;
-                totalVAT += vatAmount;
-                grandTotal += inclTotal;
-            });
-            
-            // Update summary totals
-            document.getElementById('totalDiscount').textContent = formatCurrency(totalDiscount);
-            document.getElementById('totalExclusive').textContent = formatCurrency(totalExclusive);
-            document.getElementById('totalVAT').textContent = formatCurrency(totalVAT);
-            document.getElementById('grandTotal').textContent = formatCurrency(grandTotal);
-            document.getElementById('balanceDue').textContent = formatCurrency(grandTotal);
-        }
-        
-        // Format currency as ZAR
-        function formatCurrency(amount) {
-            return 'R' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-        
-        // Format date for display
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const [year, month, day] = dateString.split('-');
-            return `${day}/${month}/${year}`;
-        }
-        
-        // Preview functionality
-        document.getElementById('previewBtn').addEventListener('click', function() {
-            updatePreview();
-            document.getElementById('previewModal').classList.remove('hidden');
-        });
-        
-        // Update preview content
-        function updatePreview() {
-            // Clone the template
-            const template = document.getElementById('purchaseOrderTemplate').cloneNode(true);
-            template.classList.remove('hidden');
-            
-            // Update company info
-            template.querySelector('#templateCompanyName').textContent = document.getElementById('companyName').value || 'Your Company';
-            template.querySelector('#templateCompanyVat').textContent = document.getElementById('companyVat').value || '';
-            template.querySelector('#templateCompanyPhysical').textContent = document.getElementById('companyPhysical').value || '';
-            template.querySelector('#templateCompanyPostal').textContent = document.getElementById('companyPostal').value || '';
-            
-            // Update supplier info
-            template.querySelector('#templateSupplierName').textContent = document.getElementById('supplierName').value || 'Supplier Name';
-            template.querySelector('#templateSupplierVat').textContent = document.getElementById('supplierVat').value || '';
-            template.querySelector('#templateSupplierPhysical').textContent = document.getElementById('supplierPhysical').value || '';
-            template.querySelector('#templateSupplierPostal').textContent = document.getElementById('supplierPostal').value || '';
-            
-            // Update PO details
-            template.querySelector('#templatePoNumber').textContent = document.getElementById('poNumber').value || '';
-            template.querySelector('#templatePoReference').textContent = document.getElementById('poReference').value || '';
-            template.querySelector('#templatePoDate').textContent = formatDate(document.getElementById('poDate').value) || '';
-            template.querySelector('#templatePoDueDate').textContent = formatDate(document.getElementById('poDueDate').value) || '';
-            template.querySelector('#templateOverallDiscount').textContent = document.getElementById('overallDiscount').value + '%' || '0.00%';
-            
-            // Add logo if uploaded
-            const logoPreview = document.getElementById('logoPreview');
-            const templateLogo = template.querySelector('#templateLogo');
-            if (logoPreview.querySelector('img')) {
-                const logoImg = logoPreview.querySelector('img').cloneNode(true);
-                logoImg.className = 'h-16 object-contain';
-                templateLogo.appendChild(logoImg);
-            }
-            
-            // Add line items
-            const templateLineItems = template.querySelector('#templateLineItems');
-            templateLineItems.innerHTML = '';
-            
-            const lineItems = document.querySelectorAll('.line-item');
-            lineItems.forEach(item => {
-                const description = item.querySelector('.item-description').value;
-                const quantity = item.querySelector('.item-quantity').value;
-                const price = item.querySelector('.item-price').value;
-                const discount = item.querySelector('.item-discount').value;
-                const vat = item.querySelector('.item-vat').value;
-                const exclTotal = item.querySelector('.item-total-excl').textContent;
-                const inclTotal = item.querySelector('.item-total-incl').textContent;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="border border-gray-300 p-2">${description || 'Item Description'}</td>
-                    <td class="border border-gray-300 p-2 text-center">${quantity || '1'}</td>
-                    <td class="border border-gray-300 p-2 text-right">R${parseFloat(price).toFixed(2)}</td>
-                    <td class="border border-gray-300 p-2 text-center">${discount || '0.00'}%</td>
-                    <td class="border border-gray-300 p-2 text-center">${vat || '15.00'}%</td>
-                    <td class="border border-gray-300 p-2 text-right">${exclTotal}</td>
-                    <td class="border border-gray-300 p-2 text-right">${inclTotal}</td>
-                `;
-                
-                templateLineItems.appendChild(row);
-            });
-            
-            // Update totals
-            template.querySelector('#templateTotalDiscount').textContent = document.getElementById('totalDiscount').textContent;
-            template.querySelector('#templateTotalExclusive').textContent = document.getElementById('totalExclusive').textContent;
-            template.querySelector('#templateTotalVAT').textContent = document.getElementById('totalVAT').textContent;
-            template.querySelector('#templateGrandTotal').textContent = document.getElementById('grandTotal').textContent;
-            template.querySelector('#templateBalanceDue').textContent = document.getElementById('balanceDue').textContent;
-            
-            // Add to preview container
-            const previewContent = document.getElementById('previewContent');
-            previewContent.innerHTML = '';
-            previewContent.appendChild(template);
-        }
-    
-// Generate PDF
-            document.getElementById('generatePDFBtn').addEventListener('click', function() {
-                try {
-                    // Update preview content first
-                    updatePreview();
-                    
-                    // Get the element with preview content
-                    const element = document.getElementById('previewContent').firstChild;
-                    
-                    // Make sure the element is visible and has content
-                    if (!element) {
-                        console.error("Preview content is empty");
-                        alert("Unable to generate PDF: Preview content is empty. Please try again.");
-                        return;
-                    }
-                    
-                    // Create a clone of the element to prevent modifications to the original
-                    const clonedElement = element.cloneNode(true);
-                    
-                    // Make sure all images are fully loaded before generating PDF
-                    const images = clonedElement.querySelectorAll('img');
-                    let imagesLoaded = true;
-                    
-                    images.forEach(img => {
-                        if (!img.complete) {
-                            imagesLoaded = false;
-                        }
-                    });
-                    
-                    if (!imagesLoaded) {
-                        console.log("Waiting for images to load...");
-                        setTimeout(() => {
-                            document.getElementById('generatePDFBtn').click();
-                        }, 500);
-                        return;
-                    }
-                    
-                    // Set PO number for filename
-                    const poNumber = document.getElementById('poNumber').value || 'purchase-order';
-                    
-                    // Configure PDF options for better rendering
-                    const opt = {
-                        margin: [10, 10, 10, 10],
-                        filename: poNumber + '.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2, // Higher scale for better quality
-                            useCORS: true, // Allow loading of images from other domains
-                            logging: true, // Enable logging for debugging
-                            letterRendering: true, // Improve rendering of text
-                            allowTaint: true, // Allow processing of tainted canvas
-                            foreignObjectRendering: true // Use ForeignObject when possible
-                        },
-                        jsPDF: { 
-                            unit: 'mm', 
-                            format: 'a4', 
-                            orientation: 'portrait',
-                            compress: true
-                        }
-                    };
-                    
-                    // Create a wrapper div to ensure proper rendering
-                    const wrapper = document.createElement('div');
-                    wrapper.appendChild(clonedElement);
-                    document.body.appendChild(wrapper);
-                    wrapper.style.position = 'absolute';
-                    wrapper.style.left = '-9999px';
-                    wrapper.style.top = '0';
-                    wrapper.style.width = '210mm'; // A4 width
-                    
-                    // Add a message to show processing status
-                    const loadingMsg = document.createElement('div');
-                    loadingMsg.innerText = 'Generating PDF...';
-                    loadingMsg.style.position = 'fixed';
-                    loadingMsg.style.top = '50%';
-                    loadingMsg.style.left = '50%';
-                    loadingMsg.style.transform = 'translate(-50%, -50%)';
-                    loadingMsg.style.padding = '20px';
-                    loadingMsg.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                    loadingMsg.style.color = 'white';
-                    loadingMsg.style.borderRadius = '5px';
-                    loadingMsg.style.zIndex = '9999';
-                    document.body.appendChild(loadingMsg);
-                    
-                    // Generate PDF with error handling
-                    html2pdf()
-                        .set(opt)
-                        .from(wrapper)
-                        .save()
-                        .then(() => {
-                            console.log('PDF generated successfully');
-                            document.body.removeChild(wrapper);
-                            document.body.removeChild(loadingMsg);
-                        })
-                        .catch(error => {
-                            console.error('Error generating PDF:', error);
-                            alert('There was an error generating the PDF. Please check the console for details.');
-                            document.body.removeChild(wrapper);
-                            document.body.removeChild(loadingMsg);
-                        });
-                    
-                } catch (error) {
-                    console.error('Error in PDF generation:', error);
-                    alert('There was an error generating the PDF. Please try again.');
-                }
-            });
-        
-// Generate Word Document
-        document.getElementById('generateWordBtn').addEventListener('click', function() {
-            // Check if library is loaded before proceeding
-            if (typeof docx === 'undefined') {
-                alert('Word export library is not loaded. Please check your internet connection and try again.');
-                return;
-            }
-            
-            // Update preview first to ensure data is current
-            updatePreview();
-            
-            // Get PO number for filename
-            const poNumber = document.getElementById('poNumber').value || 'purchase-order';
-            
-            try {
-                // Check if docx library is loaded correctly
-                if (typeof docx === 'undefined') {
-                    alert('Word export library is not loaded. Please check your internet connection and try again.');
-                    return;
-                }
-                
-                // Create document using docx.js
-                const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, HeadingLevel } = docx;
-                
-                // Create document sections
-                const doc = new Document({
-                    sections: [{
-                        properties: {},
-                        children: [
-                            // Title
-                            new Paragraph({
-                                text: "PURCHASE ORDER",
-                                heading: HeadingLevel.HEADING_1,
-                                alignment: AlignmentType.CENTER,
-                            }),
-                            
-                            // Spacer
-                            new Paragraph({
-                                text: " ",
-                            }),
-                            
-                            // PO Details table
-                            new Table({
-                                width: {
-                                    size: 100,
-                                    type: WidthType.PERCENTAGE,
-                                },
-                                rows: [
-                                    new TableRow({
-                                        children: [
-                                            new TableCell({
-                                                children: [new Paragraph("PO Number:")],
-                                                width: {
-                                                    size: 25,
-                                                    type: WidthType.PERCENTAGE,
-                                                },
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph(document.getElementById('poNumber').value || '')],
-                                                width: {
-                                                    size: 25,
-                                                    type: WidthType.PERCENTAGE,
-                                                },
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph("Date:")],
-                                                width: {
-                                                    size: 25,
-                                                    type: WidthType.PERCENTAGE,
-                                                },
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph(formatDate(document.getElementById('poDate').value) || '')],
-                                                width: {
-                                                    size: 25,
-                                                    type: WidthType.PERCENTAGE,
-                                                },
-                                            }),
-                                        ],
-                                    }),
-                                    new TableRow({
-                                        children: [
-                                            new TableCell({
-                                                children: [new Paragraph("Reference:")],
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph(document.getElementById('poReference').value || '')],
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph("Due Date:")],
-                                            }),
-                                            new TableCell({
-                                                children: [new Paragraph(formatDate(document.getElementById('poDueDate').value) || '')],
-                                            }),
-                                        ],
-                                    }),
-                                ],
-                            }),
-                            
-                            // Spacer
-                            new Paragraph({
-                                text: " ",
-                            }),
-                            
-                            // Company Info
-                            new Paragraph({
-                                text: "FROM:",
-                                heading: HeadingLevel.HEADING_3,
-                            }),
-                            new Paragraph(document.getElementById('companyName').value || 'Your Company'),
-                            new Paragraph(`VAT Number: ${document.getElementById('companyVat').value || ''}`),
-                            new Paragraph({
-                                text: "Physical Address:",
-                                bold: true,
-                            }),
-                            new Paragraph(document.getElementById('companyPhysical').value || ''),
-                            new Paragraph({
-                                text: "Postal Address:",
-                                bold: true,
-                            }),
-                            new Paragraph(document.getElementById('companyPostal').value || ''),
-                            
-                            // Spacer
-                            new Paragraph({
-                                text: " ",
-                            }),
-                            
-                            // Supplier Info
-                            new Paragraph({
-                                text: "TO:",
-                                heading: HeadingLevel.HEADING_3,
-                            }),
-                            new Paragraph(document.getElementById('supplierName').value || 'Supplier Name'),
-                            new Paragraph(`VAT Number: ${document.getElementById('supplierVat').value || ''}`),
-                            new Paragraph({
-                                text: "Physical Address:",
-                                bold: true,
-                            }),
-                            new Paragraph(document.getElementById('supplierPhysical').value || ''),
-                            new Paragraph({
-                                text: "Postal Address:",
-                                bold: true,
-                            }),
-                            new Paragraph(document.getElementById('supplierPostal').value || ''),
-                            
-                            // Spacer
-                            new Paragraph({
-                                text: " ",
-                            }),
-                        ]
-                    }]
-                });
-                
-                // Create line items table
-                const lineItemsTable = createLineItemsTable();
-                
-                // Create totals section
-                const totalsSection = createTotalsSection();
-                
-                // Add line items and totals to document
-                doc.addSection({
-                    children: [
-                        lineItemsTable,
-                        new Paragraph({ text: " " }),
-                        ...totalsSection,
-                        new Paragraph({ text: " " }),
-                        new Paragraph({
-                            text: "BALANCE DUE",
-                            alignment: AlignmentType.CENTER,
-                            heading: HeadingLevel.HEADING_2,
-                        }),
-                        new Paragraph({
-                            text: document.getElementById('balanceDue').textContent,
-                            alignment: AlignmentType.CENTER,
-                            bold: true,
-                        })
-                    ]
-                });
-                
-                // Generate and save document
-                docx.Packer.toBlob(doc)
-                    .then(blob => {
-                        saveAs(blob, `${poNumber}.docx`);
-                    })
-                    .catch(error => {
-                        console.error("Error generating Word document:", error);
-                        alert("There was an error generating the Word document. Please try again.");
-                    });
-            } catch (error) {
-                console.error("Error in Word export function:", error);
-                alert("There was an error generating the Word document. Please check the console for details.");
-            }
-            
-            /**
-             * Helper function to create line items table
-             */
-            function createLineItemsTable() {
-                const { Table, TableRow, TableCell, Paragraph, BorderStyle } = docx;
-                
-                // Create table header row
-                const headerRow = new TableRow({
-                    tableHeader: true,
-                    children: [
-                        new TableCell({
-                            children: [new Paragraph({ text: "Description", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "Qty", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "Price", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "Disc %", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "VAT %", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "Total (Excl)", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({ text: "Total (Incl)", bold: true })],
-                            borders: {
-                                top: { style: BorderStyle.SINGLE, size: 1 },
-                                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                left: { style: BorderStyle.SINGLE, size: 1 },
-                                right: { style: BorderStyle.SINGLE, size: 1 },
-                            },
-                        }),
-                    ],
-                });
-                
-                // Get line items from the form
-                const lineItems = document.querySelectorAll('.line-item');
-                
-                // Create array to hold all rows
-                const rows = [headerRow];
-                
-                // Add line items rows
-                lineItems.forEach(item => {
-                    const description = item.querySelector('.item-description').value || 'Item Description';
-                    const quantity = item.querySelector('.item-quantity').value || '1';
-                    const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
-                    const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
-                    const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
-                    const exclTotal = item.querySelector('.item-total-excl').textContent;
-                    const inclTotal = item.querySelector('.item-total-incl').textContent;
-                    
-                    const row = new TableRow({
-                        children: [
-                            new TableCell({
-                                children: [new Paragraph(description)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(quantity)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(price)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(discount)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(vat)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(exclTotal)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                            new TableCell({
-                                children: [new Paragraph(inclTotal)],
-                                borders: {
-                                    top: { style: BorderStyle.SINGLE, size: 1 },
-                                    bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                    left: { style: BorderStyle.SINGLE, size: 1 },
-                                    right: { style: BorderStyle.SINGLE, size: 1 },
-                                },
-                            }),
-                        ],
-                    });
-                    
-                    rows.push(row);
-                });
-                
-                // Create and return table
-                return new Table({
-                    rows: rows,
-                    width: {
-                        size: 100,
-                        type: WidthType.PERCENTAGE,
-                    },
-                });
-            }
-            
-            /**
-             * Helper function to create totals section
-             */
-            function createTotalsSection() {
-                const { Table, TableRow, TableCell, Paragraph, BorderStyle, AlignmentType } = docx;
-                
-                // Create totals table
-                const totalsTable = new Table({
-                    width: {
-                        size: 50,
-                        type: WidthType.PERCENTAGE,
-                    },
-                    alignment: AlignmentType.RIGHT,
-                    rows: [
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    children: [new Paragraph("Total Discount:")],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                                new TableCell({
-                                    children: [new Paragraph(document.getElementById('totalDiscount').textContent)],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                            ],
-                        }),
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    children: [new Paragraph("Total Exclusive:")],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                                new TableCell({
-                                    children: [new Paragraph(document.getElementById('totalExclusive').textContent)],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                            ],
-                        }),
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    children: [new Paragraph("Total VAT:")],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                                new TableCell({
-                                    children: [new Paragraph(document.getElementById('totalVAT').textContent)],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                            ],
-                        }),
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    children: [new Paragraph({ text: "Grand Total:", bold: true })],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                                new TableCell({
-                                    children: [new Paragraph({ text: document.getElementById('grandTotal').textContent, bold: true })],
-                                    borders: {
-                                        top: { style: BorderStyle.SINGLE, size: 1 },
-                                        bottom: { style: BorderStyle.SINGLE, size: 1 },
-                                        left: { style: BorderStyle.SINGLE, size: 1 },
-                                        right: { style: BorderStyle.SINGLE, size: 1 },
-                                    },
-                                }),
-                            ],
-                        }),
-                    ],
-                });
-                
-                return [totalsTable];
-            }
-        });        
+  </nav>
 
-// Generate Excel
-        document.getElementById('generateExcelBtn').addEventListener('click', function() {
-            const poNumber = document.getElementById('poNumber').value || 'purchase-order';
-            const companyName = document.getElementById('companyName').value || 'Your Company';
-            const supplierName = document.getElementById('supplierName').value || 'Supplier Name';
-            
-            // Create a workbook with a worksheet
-            const wb = XLSX.utils.book_new();
-            
-            // Create header data
-            const headerData = [
-                ["PURCHASE ORDER"],
-                [""],
-                ["PO Number:", document.getElementById('poNumber').value || '', "Date:", formatDate(document.getElementById('poDate').value) || ''],
-                ["Reference:", document.getElementById('poReference').value || '', "Due Date:", formatDate(document.getElementById('poDueDate').value) || ''],
-                ["Overall Discount:", document.getElementById('overallDiscount').value + "%" || '0.00%'],
-                [""],
-                ["FROM:"],
-                [companyName],
-                ["VAT No:", document.getElementById('companyVat').value || ''],
-                ["Physical Address:", document.getElementById('companyPhysical').value || ''],
-                ["Postal Address:", document.getElementById('companyPostal').value || ''],
-                [""],
-                ["TO:"],
-                [supplierName],
-                ["VAT No:", document.getElementById('supplierVat').value || ''],
-                ["Physical Address:", document.getElementById('supplierPhysical').value || ''],
-                ["Postal Address:", document.getElementById('supplierPostal').value || ''],
-                [""],
-                ["Description", "Quantity", "Price (Excl)", "Disc %", "VAT %", "Total (Excl)", "Total (Incl)"]
-            ];
-            
-            // Add line items
-            const lineItems = document.querySelectorAll('.line-item');
-            const lineItemsData = [];
-            
-            lineItems.forEach(item => {
-                const description = item.querySelector('.item-description').value || 'Item Description';
-                const quantity = item.querySelector('.item-quantity').value || '1';
-                const price = 'R' + (parseFloat(item.querySelector('.item-price').value) || 0).toFixed(2);
-                const discount = (item.querySelector('.item-discount').value || '0.00') + '%';
-                const vat = (item.querySelector('.item-vat').value || '15.00') + '%';
-                const exclTotal = item.querySelector('.item-total-excl').textContent;
-                const inclTotal = item.querySelector('.item-total-incl').textContent;
-                
-                lineItemsData.push([description, quantity, price, discount, vat, exclTotal, inclTotal]);
-            });
-            
-            // Add totals
-            const totalsData = [
-                [""],
-                ["Total Discount:", "", "", "", "", document.getElementById('totalDiscount').textContent],
-                ["Total Exclusive:", "", "", "", "", document.getElementById('totalExclusive').textContent],
-                ["Total VAT:", "", "", "", "", document.getElementById('totalVAT').textContent],
-                ["Grand Total:", "", "", "", "", document.getElementById('grandTotal').textContent],
-                [""],
-                ["BALANCE DUE", "", "", "", "", document.getElementById('balanceDue').textContent]
-            ];
-            
-            // Combine all data
-            const allData = [...headerData, ...lineItemsData, ...totalsData];
-            
-            // Create worksheet and add to workbook
-            const ws = XLSX.utils.aoa_to_sheet(allData);
-            XLSX.utils.book_append_sheet(wb, ws, "Purchase Order");
-            
-            // Generate and save Excel file
-            XLSX.writeFile(wb, poNumber + ".xlsx");
-        });
-    </script>
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Welcome to Easy Suite</h1>
+    <p class="text-gray-600 mb-8">Use the search box or click a module below to start creating quotes, invoices, orders, receipts and more.</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Module Card Template
+           Each card has a data-name attribute for filtering -->
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="quote">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
+            <!-- Quote icon -->
+            <i class="fas fa-file-lines fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Quote</h2>
+        <p class="flex-1 text-gray-600">Create and manage quotes quickly, with itemised line entries and totals.</p>
+        <a href="easy-quote.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Quote</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="invoice">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-green-100 text-green-600 flex items-center justify-center">
+            <!-- Invoice icon -->
+            <i class="fas fa-file-invoice-dollar fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Invoice</h2>
+        <p class="flex-1 text-gray-600">Generate professional invoices with tax, discounts and export options.</p>
+        <a href="easy-invoice.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Invoice</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="purchase order">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-purple-100 text-purple-600 flex items-center justify-center">
+            <!-- Purchase order icon -->
+            <i class="fas fa-shopping-cart fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Purchase Order</h2>
+        <p class="flex-1 text-gray-600">Create purchase orders for suppliers with ease and track your expenses.</p>
+        <a href="easy-purchase-order.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Purchase Order</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="sales order">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-yellow-100 text-yellow-600 flex items-center justify-center">
+            <!-- Sales order icon -->
+            <i class="fas fa-shopping-bag fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Sales Order</h2>
+        <p class="flex-1 text-gray-600">Record customer orders and manage fulfillment from a single dashboard.</p>
+        <a href="easy-sales-order.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Sales Order</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="receipt">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-teal-100 text-teal-600 flex items-center justify-center">
+            <!-- Receipt icon -->
+            <i class="fas fa-receipt fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Receipt</h2>
+        <p class="flex-1 text-gray-600">Issue receipts to customers and maintain a record of payments received.</p>
+        <a href="easy-reciept.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Receipt</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="statement">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-red-100 text-red-600 flex items-center justify-center">
+            <!-- Statement icon -->
+            <i class="fas fa-file-contract fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Statement</h2>
+        <p class="flex-1 text-gray-600">Generate account statements summarising transactions over a period.</p>
+        <a href="easy-statement.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Statement</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="job card">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-orange-100 text-orange-600 flex items-center justify-center">
+            <!-- Job card icon -->
+            <i class="fas fa-briefcase fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Job Card</h2>
+        <p class="flex-1 text-gray-600">Manage service or repair jobs with tasks, materials and labour logs.</p>
+        <a href="easy-job-card.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Job Card</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="payroll">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <!-- Payroll icon -->
+            <i class="fas fa-money-bill-wave fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Payroll</h2>
+        <p class="flex-1 text-gray-600">Prepare payroll summaries including earnings, deductions and net pay.</p>
+        <a href="easy-payroll.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Payroll</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="inventory">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-pink-100 text-pink-600 flex items-center justify-center">
+            <!-- Inventory icon -->
+            <i class="fas fa-boxes-stacked fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy Inventory</h2>
+        <p class="flex-1 text-gray-600">Track stock levels and product information to stay organised.</p>
+        <a href="easy-inventory.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open Inventory</a>
+      </div>
+
+      <div class="module-card bg-white rounded-lg shadow p-5 flex flex-col" data-name="crm">
+        <div class="mb-3">
+          <div class="h-12 w-12 rounded bg-gray-100 text-gray-600 flex items-center justify-center">
+            <!-- CRM icon -->
+            <i class="fas fa-users fa-lg"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Easy CRM</h2>
+        <p class="flex-1 text-gray-600">Maintain customer relationships, contacts and follow‑ups.</p>
+        <a href="easy-crm.html" class="mt-4 inline-block text-blue-600 font-semibold hover:underline">Open CRM</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Font Awesome for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+</body>
+</html>
