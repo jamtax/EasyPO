@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Inventory</title>
+  <meta name="description" content="Track and manage inventory levels, stock value and product information.">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    .low-stock {
+      background-color: #fee2e2;
+    }
+    @media print {
+      nav, .no-print, button {
+        display: none !important;
+      }
+      body {
+        background: white;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVIGATION -->
+<nav class="bg-blue-600 text-white py-4 no-print">
+  <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
+    <a href="index.html" class="font-bold text-xl mr-4">Easy&nbsp;Suite</a>
+    <a href="easy-quote.html">Quote</a>
+    <a href="easy-invoice.html">Invoice</a>
+    <a href="easy-purchase-order.html">Purchase Order</a>
+    <a href="easy-sales-order.html">Sales Order</a>
+    <a href="easy-reciept.html">Receipt</a>
+    <a href="easy-statement.html">Statement</a>
+    <a href="easy-job-card.html">Job Card</a>
+    <a href="easy-payroll.html">Payroll</a>
+    <a href="easy-inventory.html" class="underline">Inventory</a>
+    <a href="easy-crm.html">CRM</a>
+  </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8">
+
+  <h1 class="text-3xl font-bold mb-6 text-gray-800">Easy Inventory</h1>
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">Total Products</p>
+      <h2 id="totalProducts" class="text-2xl font-bold text-blue-600">0</h2>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">Total Stock Units</p>
+      <h2 id="totalUnits" class="text-2xl font-bold text-green-600">0</h2>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">Inventory Value</p>
+      <h2 id="totalValue" class="text-2xl font-bold text-purple-600">R 0.00</h2>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT FORM -->
+  <div class="bg-white p-6 rounded shadow mb-8 no-print">
+    <h2 class="text-xl font-bold mb-4">Add Product</h2>
+    <div class="grid md:grid-cols-6 gap-4">
+      <input id="sku" type="text" placeholder="SKU" class="border p-2 rounded">
+      <input id="name" type="text" placeholder="Product Name" class="border p-2 rounded">
+      <input id="category" type="text" placeholder="Category" class="border p-2 rounded">
+      <input id="cost" type="number" placeholder="Cost Price" class="border p-2 rounded">
+      <input id="price" type="number" placeholder="Selling Price" class="border p-2 rounded">
+      <input id="stock" type="number" placeholder="Opening Stock" class="border p-2 rounded">
+    </div>
+    <button onclick="addProduct()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      Add Product
+    </button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="flex flex-wrap gap-4 mb-4 no-print">
+    <input id="search" type="text" placeholder="Search product..." 
+           class="border p-2 rounded w-64" oninput="renderInventory()">
+    <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Export CSV
+    </button>
+    <button onclick="window.print()" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">
+      Print Report
+    </button>
+  </div>
+
+  <!-- INVENTORY TABLE -->
+  <div class="bg-white rounded shadow overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-3 text-left">SKU</th>
+          <th class="p-3 text-left">Name</th>
+          <th class="p-3 text-left">Category</th>
+          <th class="p-3 text-right">Cost</th>
+          <th class="p-3 text-right">Price</th>
+          <th class="p-3 text-right">Stock</th>
+          <th class="p-3 text-right">Value</th>
+          <th class="p-3 text-center no-print">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryBody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+
+let inventory = JSON.parse(localStorage.getItem("easyInventory")) || [];
+
+function saveInventory() {
+  localStorage.setItem("easyInventory", JSON.stringify(inventory));
+}
+
+function addProduct() {
+  const product = {
+    sku: sku.value,
+    name: name.value,
+    category: category.value,
+    cost: parseFloat(cost.value),
+    price: parseFloat(price.value),
+    stock: parseInt(stock.value)
+  };
+
+  inventory.push(product);
+  saveInventory();
+  clearForm();
+  renderInventory();
+}
+
+function deleteProduct(index) {
+  inventory.splice(index, 1);
+  saveInventory();
+  renderInventory();
+}
+
+function clearForm() {
+  document.querySelectorAll("#sku,#name,#category,#cost,#price,#stock")
+    .forEach(el => el.value = "");
+}
+
+function renderInventory() {
+  const body = document.getElementById("inventoryBody");
+  const searchQuery = document.getElementById("search").value.toLowerCase();
+  body.innerHTML = "";
+
+  let totalUnits = 0;
+  let totalValue = 0;
+
+  inventory.forEach((item, index) => {
+
+    if (!item.name.toLowerCase().includes(searchQuery) &&
+        !item.sku.toLowerCase().includes(searchQuery)) return;
+
+    const value = item.stock * item.cost;
+    totalUnits += item.stock;
+    totalValue += value;
+
+    const row = document.createElement("tr");
+
+    if (item.stock <= 5) row.classList.add("low-stock");
+
+    row.innerHTML = `
+      <td class="p-3">${item.sku}</td>
+      <td class="p-3">${item.name}</td>
+      <td class="p-3">${item.category}</td>
+      <td class="p-3 text-right">R ${item.cost.toFixed(2)}</td>
+      <td class="p-3 text-right">R ${item.price.toFixed(2)}</td>
+      <td class="p-3 text-right">${item.stock}</td>
+      <td class="p-3 text-right">R ${value.toFixed(2)}</td>
+      <td class="p-3 text-center no-print">
+        <button onclick="deleteProduct(${index})" class="text-red-600 hover:underline">Delete</button>
+      </td>
+    `;
+    body.appendChild(row);
+  });
+
+  totalProducts.innerText = inventory.length;
+  totalUnits.innerText = totalUnits;
+  totalValue.innerText = "R " + totalValue.toFixed(2);
+}
+
+function exportCSV() {
+  let csv = "SKU,Name,Category,Cost,Price,Stock,Value\n";
+  inventory.forEach(item => {
+    csv += `${item.sku},${item.name},${item.category},${item.cost},${item.price},${item.stock},${item.stock * item.cost}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "inventory.csv";
+  link.click();
+}
+
+renderInventory();
+
+</script>
+
+</body>
+</html>
