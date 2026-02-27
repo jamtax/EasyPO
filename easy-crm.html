@@ -10,44 +10,65 @@
 <link rel="shortcut icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
 
-<!-- Tailwind -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+<style>
+.dark-mode { background:#111827; color:white; }
+.dark-mode table { color:white; }
+.badge { padding:2px 8px; border-radius:12px; font-size:12px; }
+.overdue { background:#fee2e2; }
+</style>
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen" id="body">
 
-<!-- NAV -->
 <nav class="bg-blue-600 text-white py-4">
-  <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
-    <a href="index.html" class="font-bold text-xl mr-4">Easy Suite</a>
-    <a href="easy-crm.html" class="underline font-semibold">CRM</a>
-  </div>
+<div class="container mx-auto px-4 flex flex-wrap gap-4 items-center">
+<a href="index.html" class="font-bold text-xl">Easy Suite</a>
+<a href="easy-crm.html" class="underline">CRM</a>
+<button onclick="toggleDark()" class="ml-auto bg-gray-800 px-3 py-1 rounded text-sm">Dark Mode</button>
+</div>
 </nav>
 
 <main class="container mx-auto px-4 py-8">
 
 <h1 class="text-3xl font-bold mb-6">Easy CRM</h1>
 
+<!-- DASHBOARD -->
+<div class="grid md:grid-cols-4 gap-4 mb-6 text-sm">
+<div class="bg-white p-4 rounded shadow">
+<div class="font-semibold">Total Contacts</div>
+<div id="totalContacts" class="text-xl font-bold">0</div>
+</div>
+<div class="bg-white p-4 rounded shadow">
+<div class="font-semibold">Active Clients</div>
+<div id="activeClients" class="text-xl font-bold">0</div>
+</div>
+<div class="bg-white p-4 rounded shadow">
+<div class="font-semibold">Pipeline Value</div>
+<div id="pipelineValue" class="text-xl font-bold">R0</div>
+</div>
+<div class="bg-white p-4 rounded shadow">
+<div class="font-semibold">Overdue Followups</div>
+<div id="overdueCount" class="text-xl font-bold text-red-600">0</div>
+</div>
+</div>
+
 <!-- ACTION BAR -->
 <div class="flex flex-wrap gap-3 mb-6">
-  <input id="searchInput" type="text" placeholder="Search..."
-    class="border px-3 py-2 rounded w-64" oninput="renderTable()">
+<input id="search" placeholder="Search..." oninput="render()"
+class="border px-3 py-2 rounded w-60">
 
-  <select id="sortSelect" class="border px-3 py-2 rounded" onchange="renderTable()">
-    <option value="name">Sort by Name</option>
-    <option value="status">Sort by Status</option>
-    <option value="followup">Sort by Follow-up</option>
-  </select>
+<select id="sort" onchange="render()" class="border px-3 py-2 rounded">
+<option value="name">Sort Name</option>
+<option value="status">Sort Status</option>
+<option value="revenue">Sort Revenue</option>
+<option value="followup">Sort Follow-up</option>
+</select>
 
-  <button onclick="exportCSV()"
-    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-    Export CSV
-  </button>
-
-  <button onclick="clearAll()"
-    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-    Clear All
-  </button>
+<button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded">Export CSV</button>
+<button onclick="backupJSON()" class="bg-yellow-600 text-white px-4 py-2 rounded">Backup</button>
+<input type="file" onchange="restoreJSON(event)" class="border px-2 py-1 rounded">
 </div>
 
 <!-- FORM -->
@@ -55,29 +76,28 @@
 <h2 class="font-bold text-xl mb-4">Add / Edit Contact</h2>
 
 <div class="grid md:grid-cols-2 gap-4">
-  <input id="name" placeholder="Full Name" class="border p-2 rounded">
-  <input id="company" placeholder="Company" class="border p-2 rounded">
-  <input id="email" type="email" placeholder="Email" class="border p-2 rounded">
-  <input id="phone" placeholder="Phone" class="border p-2 rounded">
-
-  <select id="status" class="border p-2 rounded">
-    <option>Lead</option>
-    <option>Prospect</option>
-    <option>Client</option>
-    <option>Inactive</option>
-  </select>
-
-  <input id="followup" type="date" class="border p-2 rounded">
+<input id="name" placeholder="Full Name" class="border p-2 rounded">
+<input id="company" placeholder="Company" class="border p-2 rounded">
+<input id="email" type="email" placeholder="Email" class="border p-2 rounded">
+<input id="phone" placeholder="Phone" class="border p-2 rounded">
+<select id="status" class="border p-2 rounded">
+<option>Lead</option>
+<option>Prospect</option>
+<option>Client</option>
+<option>Inactive</option>
+</select>
+<input id="followup" type="date" class="border p-2 rounded">
+<input id="revenue" type="number" placeholder="Revenue (ZAR)" class="border p-2 rounded">
+<input id="tags" placeholder="Tags (comma separated)" class="border p-2 rounded">
 </div>
 
 <textarea id="notes" placeholder="Notes..."
-  class="border p-2 rounded w-full mt-4"></textarea>
+class="border p-2 rounded w-full mt-4"></textarea>
 
 <input type="hidden" id="editId">
 
-<button onclick="saveContact()"
-  class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-  Save Contact
+<button onclick="save()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+Save Contact
 </button>
 </div>
 
@@ -87,14 +107,13 @@
 <thead class="bg-gray-200">
 <tr>
 <th class="p-3 text-left">Name</th>
-<th class="p-3 text-left">Company</th>
-<th class="p-3 text-left">Email</th>
 <th class="p-3 text-left">Status</th>
+<th class="p-3 text-left">Revenue</th>
 <th class="p-3 text-left">Follow-up</th>
 <th class="p-3 text-left">Actions</th>
 </tr>
 </thead>
-<tbody id="tableBody"></tbody>
+<tbody id="tbody"></tbody>
 </table>
 </div>
 
@@ -102,67 +121,154 @@
 
 <!-- MODAL -->
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-  <div class="bg-white p-6 rounded shadow max-w-md w-full">
-    <h3 class="text-xl font-bold mb-4">Contact Details</h3>
-    <div id="modalContent" class="text-sm"></div>
-    <button onclick="closeModal()"
-      class="mt-4 bg-blue-600 text-white px-4 py-2 rounded w-full">
-      Close
-    </button>
-  </div>
+<div class="bg-white p-6 rounded shadow max-w-md w-full">
+<h3 class="text-xl font-bold mb-4">Contact Profile</h3>
+<div id="modalContent"></div>
+<button onclick="closeModal()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded w-full">Close</button>
+</div>
 </div>
 
 <script>
-let contacts = JSON.parse(localStorage.getItem("easyCRM")) || [];
+let contacts = JSON.parse(localStorage.getItem("crm")) || [];
 
-function persist() {
-  localStorage.setItem("easyCRM", JSON.stringify(contacts));
+function persist(){ localStorage.setItem("crm", JSON.stringify(contacts)); }
+
+function save(){
+if(!name.value.trim()) return alert("Name required");
+
+let id = editId.value || Date.now();
+let contact = {
+id:Number(id),
+name:name.value,
+company:company.value,
+email:email.value,
+phone:phone.value,
+status:status.value,
+followup:followup.value,
+revenue:Number(revenue.value)||0,
+tags:tags.value.split(",").map(t=>t.trim()).filter(Boolean),
+notes:notes.value,
+activity:[{date:new Date().toISOString(), note:"Contact updated"}]
+};
+
+if(editId.value){
+contacts = contacts.map(c=>c.id==id?{...c,...contact}:c);
+}else{
+contacts.push(contact);
 }
 
-function saveContact() {
-  if (!name.value.trim()) return alert("Name required");
-
-  const id = editId.value ? Number(editId.value) : Date.now();
-
-  const contact = {
-    id,
-    name: name.value,
-    company: company.value,
-    email: email.value,
-    phone: phone.value,
-    status: status.value,
-    followup: followup.value,
-    notes: notes.value
-  };
-
-  if (editId.value) {
-    contacts = contacts.map(c => c.id === id ? contact : c);
-  } else {
-    contacts.push(contact);
-  }
-
-  clearForm();
-  persist();
-  renderTable();
+clearForm();
+persist();
+render();
 }
 
-function clearForm() {
-  document.querySelectorAll("input, textarea").forEach(i => i.value = "");
-  editId.value = "";
+function clearForm(){
+document.querySelectorAll("input, textarea").forEach(e=>e.value="");
+editId.value="";
 }
 
-function deleteContact(id) {
-  if (!confirm("Delete contact?")) return;
-  contacts = contacts.filter(c => c.id !== id);
-  persist();
-  renderTable();
+function deleteContact(id){
+if(!confirm("Delete?")) return;
+contacts = contacts.filter(c=>c.id!=id);
+persist(); render();
 }
 
-function editContact(id) {
-  const c = contacts.find(x => x.id === id);
-  name.value = c.name;
-  company.value = c.company;
-  email.value = c.email;
-  phone.value = c.phone;
-  status.value = c.status;
-  followup.value
+function view(id){
+let c = contacts.find(x=>x.id==id);
+modalContent.innerHTML = `
+<p><strong>Name:</strong> ${c.name}</p>
+<p><strong>Company:</strong> ${c.company}</p>
+<p><strong>Email:</strong> ${c.email}</p>
+<p><strong>Phone:</strong> ${c.phone}</p>
+<p><strong>Status:</strong> ${c.status}</p>
+<p><strong>Revenue:</strong> R${c.revenue}</p>
+<p><strong>Tags:</strong> ${c.tags.join(", ")}</p>
+<p><strong>Notes:</strong> ${c.notes}</p>
+`;
+modal.classList.remove("hidden");
+modal.classList.add("flex");
+}
+
+function closeModal(){
+modal.classList.add("hidden");
+}
+
+function render(){
+let q = search.value?.toLowerCase()||"";
+let s = sort.value;
+let filtered = contacts.filter(c=>
+c.name.toLowerCase().includes(q) ||
+c.company.toLowerCase().includes(q) ||
+c.email.toLowerCase().includes(q)
+);
+
+filtered.sort((a,b)=>{
+if(s==="revenue") return b.revenue-a.revenue;
+if(s==="followup") return new Date(a.followup)-new Date(b.followup);
+return a[s].localeCompare(b[s]);
+});
+
+tbody.innerHTML="";
+let overdue=0, pipeline=0, active=0;
+
+filtered.forEach(c=>{
+let isOverdue = c.followup && new Date(c.followup)<new Date();
+if(isOverdue) overdue++;
+if(c.status!=="Inactive") pipeline+=c.revenue;
+if(c.status==="Client") active++;
+
+tbody.innerHTML+=`
+<tr class="${isOverdue?'overdue':''} border-t">
+<td class="p-3">${c.name}</td>
+<td class="p-3">${c.status}</td>
+<td class="p-3">R${c.revenue}</td>
+<td class="p-3">${c.followup||"-"}</td>
+<td class="p-3">
+<button onclick="view(${c.id})" class="text-blue-600 mr-2">View</button>
+<button onclick="editId.value=${c.id}; view(${c.id});" class="text-green-600 mr-2">Edit</button>
+<button onclick="deleteContact(${c.id})" class="text-red-600">Delete</button>
+</td>
+</tr>`;
+});
+
+totalContacts.textContent=contacts.length;
+activeClients.textContent=active;
+pipelineValue.textContent="R"+pipeline;
+overdueCount.textContent=overdue;
+}
+
+function exportCSV(){
+let csv="Name,Company,Email,Phone,Status,Revenue,Followup\n";
+contacts.forEach(c=>{
+csv+=`${c.name},${c.company},${c.email},${c.phone},${c.status},${c.revenue},${c.followup}\n`;
+});
+let blob=new Blob([csv]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="crm-export.csv";
+a.click();
+}
+
+function backupJSON(){
+let blob=new Blob([JSON.stringify(contacts)],{type:"application/json"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="crm-backup.json";
+a.click();
+}
+
+function restoreJSON(e){
+let reader=new FileReader();
+reader.onload=()=>{ contacts=JSON.parse(reader.result); persist(); render(); };
+reader.readAsText(e.target.files[0]);
+}
+
+function toggleDark(){
+body.classList.toggle("dark-mode");
+}
+
+render();
+</script>
+
+</body>
+</html>
