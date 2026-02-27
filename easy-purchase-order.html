@@ -3,746 +3,1512 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Easy Inventory</title>
-  <meta name="description" content="Track stock levels, stock movements, and inventory value with Easy Inventory." />
+  <title>EasyPO – Feature-Rich Purchase Order Generator</title>
+  <meta name="description" content="Create professional purchase orders. Line items, VAT, discounts, autosave, templates, history, print-friendly output, and offline exports (PDF via print, Word, Excel, CSV, JSON)." />
+
+  <!-- Favicon -->
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- Tailwind CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
-  <style>
-    :root { --primary:#2563eb; --danger:#dc2626; --success:#16a34a; --muted:#64748b; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; box-shadow:0 10px 25px rgba(2,6,23,.05); }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.6rem 1rem; border-radius:10px; font-weight:800; border:1px solid transparent; transition:.15s; }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary { background: var(--primary); color:#fff; }
-    .btn-primary:hover { filter: brightness(.95); }
-    .btn-outline { background:#fff; border-color:#e5e7eb; color:#0f172a; }
-    .btn-outline:hover { background:#f8fafc; }
-    .btn-danger { background: var(--danger); color:#fff; }
-    .btn-success { background: var(--success); color:#fff; }
-    .pill { display:inline-flex; align-items:center; padding:.2rem .6rem; border-radius:999px; font-weight:800; font-size:.75rem; }
-    .pill-low { background:#fee2e2; color:#991b1b; }
-    .pill-ok { background:#dcfce7; color:#166534; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
-    .toast { position: fixed; right: 16px; bottom: 16px; z-index: 9999; }
-    .toast > div { background: rgba(2,6,23,.92); color: #fff; border-radius: 12px; padding: 12px 14px; max-width: 360px; }
-    .modal-backdrop { background: rgba(2,6,23,.65); }
-    .responsive-table { overflow-x:auto; -webkit-overflow-scrolling: touch; }
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <style>
+    :root{
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --danger:#dc2626;
+      --success:#16a34a;
+      --warning:#f59e0b;
+    }
+    body{background:var(--bg); color:var(--text);}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 25px rgba(2,6,23,.05);}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.7rem 1rem; border-radius:10px; font-weight:800; transition: all .2s ease; border:1px solid transparent;}
+    .btn:hover{transform:translateY(-1px);}
+    .btn-primary{background:var(--primary); color:#fff;}
+    .btn-primary:hover{background:var(--primary2);}
+    .btn-outline{background:#fff; border-color:var(--border); color:var(--text);}
+    .btn-outline:hover{border-color:#cbd5e1; background:#f8fafc;}
+    .btn-danger{background:var(--danger); color:#fff;}
+    .btn-danger:hover{filter:brightness(.95);}
+    .btn-success{background:var(--success); color:#fff;}
+    .btn-success:hover{filter:brightness(.95);}
+
+    .badge{display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:999px; font-weight:900; font-size:.75rem;}
+    .badge-draft{background:#eef2ff; color:#3730a3;}
+    .badge-sent{background:#ecfeff; color:#155e75;}
+    .badge-approved{background:#ffedd5; color:#9a3412;}
+    .badge-received{background:#dcfce7; color:#166534;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .responsive-table {overflow-x:auto; -webkit-overflow-scrolling:touch;}
+
+    input:focus, textarea:focus, select:focus{
+      outline:none!important;
+      border-color: rgba(37, 99, 235, .8)!important;
+      box-shadow:0 0 0 3px rgba(37,99,235,.15)!important;
+    }
+
+    /* Print-friendly manual style */
     @media print {
       .no-print { display:none !important; }
+      .print-only { display:block !important; }
       body { background:#fff !important; }
       .card { box-shadow:none !important; border:none !important; }
+      .manual-print { max-width: 210mm; margin:0 auto; padding:0; }
       table { page-break-inside:auto; }
       tr { page-break-inside:avoid; page-break-after:auto; }
       thead { display:table-header-group; }
       tfoot { display:table-footer-group; }
     }
+
+    /* Tiny toast */
+    #toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 9999;
+      min-width: 240px;
+      max-width: 360px;
+      background: rgba(15, 23, 42, .92);
+      color: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display:none;
+      box-shadow: 0 14px 35px rgba(2,6,23,.25);
+    }
+    #toast.show { display:block; }
+    #toast .title { font-weight: 900; font-size: 0.95rem; }
+    #toast .msg { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
   </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen flex flex-col">
 
-  <!-- NAV -->
+  <!-- Top Nav -->
   <nav class="bg-blue-600 text-white py-4 no-print">
     <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
-      <a data-safe-link href="index.html" class="font-bold text-xl mr-4">Easy&nbsp;Suite</a>
-      <a data-safe-link href="easy-quote.html" class="hover:underline">Quote</a>
-      <a data-safe-link href="easy-invoice.html" class="hover:underline">Invoice</a>
-      <a data-safe-link href="easy-purchase-order.html" class="hover:underline">Purchase&nbsp;Order</a>
-      <a data-safe-link href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
-      <a data-safe-link href="easy-reciept.html" class="hover:underline">Receipt</a>
-      <a data-safe-link href="easy-statement.html" class="hover:underline">Statement</a>
-      <a data-safe-link href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
-      <a data-safe-link href="easy-payroll.html" class="hover:underline">Payroll</a>
-      <a data-safe-link href="easy-inventory.html" class="underline font-extrabold">Inventory</a>
-      <a data-safe-link href="easy-crm.html" class="hover:underline">CRM</a>
+      <a href="index.html" class="font-black text-xl mr-4">Easy&nbsp;Suite</a>
+
+      <a href="easy-quote.html" class="hover:underline">Quote</a>
+      <a href="easy-invoice.html" class="hover:underline">Invoice</a>
+      <a href="easy-purchase-order.html" class="underline font-extrabold">Purchase&nbsp;Order</a>
+      <a href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
+      <!-- IMPORTANT: corrected filename -->
+      <a href="easy-receipt.html" class="hover:underline">Receipt</a>
+      <a href="easy-statement.html" class="hover:underline">Statement</a>
+      <a href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
+      <a href="easy-payroll.html" class="hover:underline">Payroll</a>
+      <a href="easy-inventory.html" class="hover:underline">Inventory</a>
+      <a href="easy-crm.html" class="hover:underline">CRM</a>
     </div>
   </nav>
 
-  <main class="container mx-auto px-4 py-8">
-
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-3xl font-extrabold text-slate-900">Easy Inventory</h1>
-        <p class="text-sm text-slate-600 mt-1">
-          Product master + stock movements + valuation. Works offline (LocalStorage).
-        </p>
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 no-print">
+    <div class="container mx-auto px-4 py-4 flex flex-col lg:flex-row gap-4 lg:gap-0 items-start lg:items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black">PO</div>
+        <div>
+          <h1 class="text-2xl font-extrabold text-blue-700">EasyPO</h1>
+          <p class="text-sm text-gray-500">Feature-Rich Purchase Order Generator</p>
+        </div>
       </div>
 
-      <div class="flex flex-wrap gap-2 no-print">
-        <button class="btn btn-outline" id="btnSeed">Seed Demo Data</button>
-        <button class="btn btn-outline" id="btnImport">Import CSV</button>
-        <input class="hidden" type="file" id="csvFile" accept=".csv" />
-        <button class="btn btn-outline" id="btnExport">Export CSV</button>
-        <button class="btn btn-outline" id="btnPrint">Print Report</button>
-        <button class="btn btn-primary" id="btnAdd">Add Product</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button class="btn btn-outline" id="btnSaveTemplate" title="Save current PO as a template">
+          <i class="fa-solid fa-floppy-disk"></i> Save Template
+        </button>
+        <button class="btn btn-outline" id="btnLoadTemplate" title="Load a saved template">
+          <i class="fa-solid fa-folder-open"></i> Load Template
+        </button>
+        <button class="btn btn-outline" id="btnReset" title="Reset form (templates remain)">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+
+        <div class="hidden sm:flex items-center gap-2 ml-0 lg:ml-4">
+          <span class="text-xs text-gray-500">
+            Autosave: <span class="font-bold" id="autosaveStatus">On</span>
+          </span>
+          <select id="historySelect" class="border border-gray-200 rounded-lg px-2 py-2 text-sm" title="Load from PO history"></select>
+          <button class="btn btn-outline" id="btnDeleteSaved" title="Delete the selected saved PO from history">
+            <i class="fa-solid fa-trash"></i> Delete Saved
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-6 md:py-8">
+
+    <!-- Tips -->
+    <div class="card p-4 mb-6 no-print">
+      <div class="flex gap-3">
+        <div class="text-blue-600 pt-0.5"><i class="fa-solid fa-circle-info"></i></div>
+        <div class="flex-1">
+          <h3 class="text-sm font-extrabold text-slate-900">Quick flow</h3>
+          <div class="text-sm text-slate-600 mt-1">
+            1) Fill Buyer + Supplier → 2) Add items → 3) Preview → 4) Export (Print/PDF/Word/Excel/CSV/JSON) → 5) Save as template or save in History.
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- SUMMARY -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="card p-5">
-        <div class="text-xs text-slate-500 font-black">PRODUCTS</div>
-        <div id="kpiProducts" class="text-2xl font-black text-blue-700 mt-1">0</div>
-      </div>
-      <div class="card p-5">
-        <div class="text-xs text-slate-500 font-black">TOTAL UNITS</div>
-        <div id="kpiUnits" class="text-2xl font-black text-emerald-700 mt-1">0</div>
-      </div>
-      <div class="card p-5">
-        <div class="text-xs text-slate-500 font-black">COST VALUE</div>
-        <div id="kpiCost" class="text-2xl font-black text-indigo-700 mt-1">R0.00</div>
-      </div>
-      <div class="card p-5">
-        <div class="text-xs text-slate-500 font-black">LOW STOCK</div>
-        <div id="kpiLow" class="text-2xl font-black text-rose-700 mt-1">0</div>
-      </div>
-    </section>
+    <!-- Top Grid: Buyer + Supplier + PO Meta -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-    <!-- FILTERS -->
-    <section class="card p-4 mb-6 no-print">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <label class="text-xs font-black text-slate-600">Search</label>
-          <input id="q" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="SKU, name, category..." />
+      <!-- Buyer -->
+      <section class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-extrabold"><i class="fa-solid fa-building text-blue-600 mr-2"></i>Buyer</h2>
+          <span class="text-xs text-slate-500">Issuer</span>
         </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Category</label>
-          <select id="cat" class="w-full border border-gray-200 rounded-lg px-3 py-2">
-            <option value="">All categories</option>
-          </select>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Buyer Logo</label>
+            <input type="file" id="buyerLogo" accept="image/*"
+              class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            <div id="buyerLogoPreview" class="mt-2 h-14 flex items-center">
+              <p class="text-sm text-slate-400">No logo uploaded</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Buyer Name</label>
+            <input id="buyerName" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Your Company (Pty) Ltd">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">VAT Number</label>
+              <input id="buyerVat" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Optional">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Reg/CK</label>
+              <input id="buyerReg" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Optional">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Email</label>
+            <input id="buyerEmail" type="email" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="procurement@company.co.za">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Phone</label>
+              <input id="buyerPhone" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="+27 ...">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Website</label>
+              <input id="buyerWebsite" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="https://...">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Address</label>
+            <textarea id="buyerAddress" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Street, City, Province, Postal Code"></textarea>
+          </div>
         </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Low stock threshold</label>
-          <input id="threshold" type="number" min="0" step="1" class="w-full border border-gray-200 rounded-lg px-3 py-2" value="5" />
+      </section>
+
+      <!-- Supplier -->
+      <section class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-extrabold"><i class="fa-solid fa-truck-field text-blue-600 mr-2"></i>Supplier</h2>
+          <span class="text-xs text-slate-500">Vendor</span>
         </div>
-        <div class="flex items-end gap-2">
-          <button class="btn btn-outline w-full" id="btnClear">Clear Filters</button>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Supplier Name</label>
+            <input id="supplierName" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Supplier Company">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Supplier VAT</label>
+              <input id="supplierVat" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Optional">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Supplier Reg</label>
+              <input id="supplierReg" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Optional">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Email</label>
+            <input id="supplierEmail" type="email" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="sales@supplier.co.za">
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Phone</label>
+            <input id="supplierPhone" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="+27 ...">
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Address</label>
+            <textarea id="supplierAddress" rows="4" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Street, City, Province, Postal Code"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- PO Meta -->
+      <section class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-extrabold"><i class="fa-solid fa-file-signature text-blue-600 mr-2"></i>Purchase Order</h2>
+          <span id="statusBadge" class="badge badge-draft"><i class="fa-solid fa-pen"></i> DRAFT</span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">PO #</label>
+              <input id="poNumber" class="w-full border border-gray-200 rounded-lg px-3 py-2 mono" placeholder="PO0000001">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Reference</label>
+              <input id="poReference" class="w-full border border-gray-200 rounded-lg px-3 py-2 mono" placeholder="Project / Ticket / RFQ">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Issue Date</label>
+              <input id="poDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Delivery Date</label>
+              <input id="deliveryDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Currency</label>
+              <select id="currency" class="w-full border border-gray-200 rounded-lg px-3 py-2">
+                <option value="ZAR" selected>ZAR (R)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+              <p class="text-xs text-slate-500 mt-1">No FX conversion; formatting only.</p>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Status</label>
+              <select id="poStatus" class="w-full border border-gray-200 rounded-lg px-3 py-2">
+                <option value="draft" selected>Draft</option>
+                <option value="sent">Sent</option>
+                <option value="approved">Approved</option>
+                <option value="received">Received</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 pt-3 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Overall Discount %</label>
+                <input id="overallDiscount" type="number" min="0" max="100" step="0.01" value="0.00"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Shipping / Delivery</label>
+                <input id="shipping" type="number" min="0" step="0.01" value="0.00"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Default VAT % (new lines)</label>
+                <input id="defaultVat" type="number" min="0" max="100" step="0.01" value="15.00"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Payment Terms</label>
+                <input id="paymentTerms" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="e.g., Net 30">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Delivery Address</label>
+              <textarea id="deliveryAddress" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Where goods/services should be delivered"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+              <button class="btn btn-outline w-full" id="btnNewNumber">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> New PO #
+              </button>
+              <button class="btn btn-outline w-full" id="btnMarkReceived">
+                <i class="fa-solid fa-check"></i> Mark Received
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+    <!-- Line Items -->
+    <section class="card p-5 mb-6">
+      <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-4">
+        <h2 class="text-lg font-extrabold"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i>Line Items</h2>
+        <div class="flex flex-wrap gap-2 no-print">
+          <button class="btn btn-outline" id="btnImportCSV" title="Import CSV: Description,Qty,Unit,Rate,Disc%,VAT%">
+            <i class="fa-solid fa-file-import"></i> Import CSV
+          </button>
+          <input type="file" id="csvFile" accept=".csv" class="hidden">
+          <button class="btn btn-primary" id="btnAddLine">
+            <i class="fa-solid fa-plus"></i> Add Line
+          </button>
         </div>
       </div>
-    </section>
 
-    <!-- TABLE -->
-    <section class="card p-0 overflow-hidden">
       <div class="responsive-table">
-        <table class="min-w-full text-sm">
-          <thead class="bg-gray-50 text-slate-600">
-            <tr>
-              <th class="p-3 text-left">SKU</th>
-              <th class="p-3 text-left">Name</th>
-              <th class="p-3 text-left">Category</th>
-              <th class="p-3 text-right">Cost</th>
-              <th class="p-3 text-right">Price</th>
-              <th class="p-3 text-right">Stock</th>
-              <th class="p-3 text-right">Value (Cost)</th>
-              <th class="p-3 text-left">Status</th>
-              <th class="p-3 text-center no-print">Actions</th>
+        <table class="w-full text-sm border-collapse" id="itemsTable">
+          <thead>
+            <tr class="bg-gray-50 text-gray-600">
+              <th class="border border-gray-200 p-2 text-left">Description</th>
+              <th class="border border-gray-200 p-2 text-center">Qty</th>
+              <th class="border border-gray-200 p-2 text-center">Unit</th>
+              <th class="border border-gray-200 p-2 text-center">Rate (Excl.)</th>
+              <th class="border border-gray-200 p-2 text-center">Disc %</th>
+              <th class="border border-gray-200 p-2 text-center">VAT %</th>
+              <th class="border border-gray-200 p-2 text-right">Total Excl.</th>
+              <th class="border border-gray-200 p-2 text-right">Total Incl.</th>
+              <th class="border border-gray-200 p-2 text-center no-print">Action</th>
             </tr>
           </thead>
-          <tbody id="rows" class="divide-y divide-gray-100"></tbody>
+          <tbody id="itemsBody"></tbody>
         </table>
-      </div>
-
-      <div class="p-4 text-xs text-slate-500">
-        Tip: Use <span class="mono">Adjust</span> for Stock In/Out to keep a movement log.
       </div>
     </section>
 
-    <!-- MOVEMENTS -->
-    <section class="card p-5 mt-6">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <div>
-          <h2 class="text-lg font-black text-slate-900">Stock Movements</h2>
-          <p class="text-xs text-slate-500">Last 50 movements (local)</p>
+    <!-- Notes & Terms -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <section class="card p-5">
+        <h2 class="text-lg font-extrabold mb-3"><i class="fa-solid fa-note-sticky text-blue-600 mr-2"></i>Notes</h2>
+        <textarea id="notes" rows="6" class="w-full border border-gray-200 rounded-lg px-3 py-2"
+          placeholder="Optional notes (delivery constraints, contact person, etc.)"></textarea>
+      </section>
+
+      <section class="card p-5">
+        <h2 class="text-lg font-extrabold mb-3"><i class="fa-solid fa-file-contract text-blue-600 mr-2"></i>Terms</h2>
+        <textarea id="terms" rows="6" class="w-full border border-gray-200 rounded-lg px-3 py-2"
+          placeholder="Terms & conditions, acceptance, lead times, return policy, etc."></textarea>
+      </section>
+    </div>
+
+    <!-- Totals + Actions -->
+    <section class="card p-5 mb-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2">
+          <h2 class="text-lg font-extrabold mb-2"><i class="fa-solid fa-calculator text-blue-600 mr-2"></i>Totals</h2>
+          <p class="text-sm text-slate-500">
+            Discount logic: line discount first, then overall discount on subtotal. VAT is reduced proportionally by overall discount.
+          </p>
         </div>
-        <button class="btn btn-outline no-print" id="btnClearMoves">Clear Movements</button>
+
+        <div class="lg:col-span-1">
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between border-t border-gray-100 pt-2">
+              <span class="font-bold text-slate-700">Subtotal (Excl.)</span>
+              <span id="tSubtotal" class="font-extrabold mono">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Line Discounts</span>
+              <span id="tLineDiscount" class="font-extrabold mono">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Overall Discount</span>
+              <span id="tOverallDiscount" class="font-extrabold mono">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">VAT Total</span>
+              <span id="tVat" class="font-extrabold mono">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Shipping</span>
+              <span id="tShipping" class="font-extrabold mono">R0.00</span>
+            </div>
+
+            <div class="flex justify-between border-t border-b border-gray-100 py-2 text-base">
+              <span class="font-black text-slate-900">GRAND TOTAL</span>
+              <span id="tGrand" class="font-black mono">R0.00</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="responsive-table">
-        <table class="min-w-full text-sm">
-          <thead class="bg-gray-50 text-slate-600">
-            <tr>
-              <th class="p-3 text-left">Time</th>
-              <th class="p-3 text-left">SKU</th>
-              <th class="p-3 text-left">Type</th>
-              <th class="p-3 text-right">Qty</th>
-              <th class="p-3 text-left">Note</th>
-            </tr>
-          </thead>
-          <tbody id="moves" class="divide-y divide-gray-100"></tbody>
-        </table>
+      <div class="mt-6 flex flex-wrap gap-3 justify-center no-print">
+        <button class="btn btn-outline" id="btnPreview">
+          <i class="fa-solid fa-eye"></i> Preview
+        </button>
+        <button class="btn btn-outline" id="btnPrint">
+          <i class="fa-solid fa-print"></i> Print (Manual)
+        </button>
+        <button class="btn btn-danger" id="btnPDF">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-primary" id="btnWord">
+          <i class="fa-solid fa-file-word"></i> Export Word
+        </button>
+        <button class="btn btn-success" id="btnExcel">
+          <i class="fa-solid fa-file-excel"></i> Export Excel
+        </button>
+        <button class="btn btn-outline" id="btnCSV">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+        <button class="btn btn-outline" id="btnJSON">
+          <i class="fa-solid fa-code"></i> Export JSON
+        </button>
+        <button class="btn btn-success" id="btnSavePO">
+          <i class="fa-solid fa-bookmark"></i> Save to History
+        </button>
       </div>
     </section>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50 no-print">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-screen overflow-y-auto">
+        <div class="p-4 flex justify-between items-center border-b border-gray-200">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Purchase Order Preview</h2>
+            <p class="text-xs text-slate-500">This is the export/print layout.</p>
+          </div>
+          <button id="btnClosePreview" class="text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <div id="previewContent" class="p-6"></div>
+
+        <div class="p-4 border-t border-gray-200 flex justify-end gap-2">
+          <button class="btn btn-outline" id="btnClosePreviewBottom">Close</button>
+          <button class="btn btn-danger" id="btnPDF2">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Export Template -->
+    <div id="poTemplate" class="hidden">
+      <div class="manual-print max-w-4xl mx-auto bg-white p-6">
+        <div class="flex items-start justify-between gap-6 mb-6">
+          <div class="flex-1">
+            <div id="tplLogo" class="mb-3"></div>
+            <div class="text-xl font-black" id="tplBuyerName">Buyer</div>
+            <div class="text-sm text-slate-600 mt-1 whitespace-pre-line" id="tplBuyerAddress"></div>
+            <div class="text-sm text-slate-600 mt-2">
+              <div><span class="font-bold">VAT:</span> <span id="tplBuyerVat"></span></div>
+              <div><span class="font-bold">Reg:</span> <span id="tplBuyerReg"></span></div>
+              <div><span class="font-bold">Email:</span> <span id="tplBuyerEmail"></span></div>
+              <div><span class="font-bold">Phone:</span> <span id="tplBuyerPhone"></span></div>
+              <div><span class="font-bold">Website:</span> <span id="tplBuyerWebsite"></span></div>
+            </div>
+          </div>
+
+          <div class="w-80 text-right">
+            <div class="text-3xl font-black tracking-tight">PURCHASE ORDER</div>
+            <div class="mt-2 grid grid-cols-2 gap-x-2 text-sm">
+              <span class="text-right font-bold">PO #:</span><span class="text-left mono" id="tplPoNumber"></span>
+              <span class="text-right font-bold">REF:</span><span class="text-left mono" id="tplPoRef"></span>
+              <span class="text-right font-bold">ISSUE:</span><span class="text-left" id="tplPoDate"></span>
+              <span class="text-right font-bold">DELIVERY:</span><span class="text-left" id="tplDeliveryDate"></span>
+              <span class="text-right font-bold">STATUS:</span><span class="text-left" id="tplPoStatus"></span>
+              <span class="text-right font-bold">CURRENCY:</span><span class="text-left mono" id="tplCurrency"></span>
+              <span class="text-right font-bold">TERMS:</span><span class="text-left" id="tplPayTerms"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-xs text-slate-500 font-black mb-2">SUPPLIER</div>
+            <div class="text-base font-black" id="tplSupplierName"></div>
+            <div class="text-sm text-slate-600 mt-1 whitespace-pre-line" id="tplSupplierAddress"></div>
+            <div class="text-sm text-slate-600 mt-2">
+              <div><span class="font-bold">VAT:</span> <span id="tplSupplierVat"></span></div>
+              <div><span class="font-bold">Reg:</span> <span id="tplSupplierReg"></span></div>
+              <div><span class="font-bold">Email:</span> <span id="tplSupplierEmail"></span></div>
+              <div><span class="font-bold">Phone:</span> <span id="tplSupplierPhone"></span></div>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-xs text-slate-500 font-black mb-2">DELIVER TO</div>
+            <div class="text-sm text-slate-700 whitespace-pre-line" id="tplDeliveryAddress"></div>
+          </div>
+        </div>
+
+        <div class="responsive-table mb-5">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="border border-gray-200 p-2 text-left">Description</th>
+                <th class="border border-gray-200 p-2 text-center">Qty</th>
+                <th class="border border-gray-200 p-2 text-center">Unit</th>
+                <th class="border border-gray-200 p-2 text-right">Rate</th>
+                <th class="border border-gray-200 p-2 text-center">Disc</th>
+                <th class="border border-gray-200 p-2 text-center">VAT</th>
+                <th class="border border-gray-200 p-2 text-right">Excl</th>
+                <th class="border border-gray-200 p-2 text-right">Incl</th>
+              </tr>
+            </thead>
+            <tbody id="tplItems"></tbody>
+          </table>
+        </div>
+
+        <div class="flex justify-end mb-6">
+          <div class="w-full sm:w-1/2 md:w-1/3 text-sm">
+            <div class="flex justify-between border-t border-gray-200 pt-2">
+              <span class="font-bold text-slate-700">Subtotal</span>
+              <span class="mono" id="tplSubtotal"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Line Discounts</span>
+              <span class="mono" id="tplLineDisc"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Overall Discount</span>
+              <span class="mono" id="tplOverallDisc"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">VAT</span>
+              <span class="mono" id="tplVat"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-700">Shipping</span>
+              <span class="mono" id="tplShipping"></span>
+            </div>
+            <div class="flex justify-between border-t border-b border-gray-200 py-2 font-black text-base">
+              <span>GRAND TOTAL</span>
+              <span class="mono" id="tplGrand"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-xs text-slate-500 font-black mb-2">NOTES</div>
+            <div class="text-sm text-slate-700 whitespace-pre-line" id="tplNotes"></div>
+          </div>
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-xs text-slate-500 font-black mb-2">TERMS</div>
+            <div class="text-sm text-slate-700 whitespace-pre-line" id="tplTerms"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 text-xs text-slate-500 text-center">
+          Generated with EasyPO • Print-friendly output
+        </div>
+      </div>
+    </div>
 
   </main>
 
-  <!-- ADD/EDIT MODAL -->
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center p-4 z-50 no-print">
-    <div class="modal-backdrop absolute inset-0"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h3 id="modalTitle" class="text-xl font-black text-slate-900">Add Product</h3>
-          <p class="text-xs text-slate-500">SKU must be unique.</p>
-        </div>
-        <button id="btnClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">×</button>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-        <div>
-          <label class="text-xs font-black text-slate-600">SKU</label>
-          <input id="fSku" class="w-full border border-gray-200 rounded-lg px-3 py-2 mono" placeholder="SKU001" />
-        </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Category</label>
-          <input id="fCat" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Hardware / Licenses / Services" />
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="text-xs font-black text-slate-600">Name</label>
-          <input id="fName" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="Product name" />
-        </div>
-
-        <div>
-          <label class="text-xs font-black text-slate-600">Cost Price</label>
-          <input id="fCost" type="number" min="0" step="0.01" class="w-full border border-gray-200 rounded-lg px-3 py-2" />
-        </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Selling Price</label>
-          <input id="fPrice" type="number" min="0" step="0.01" class="w-full border border-gray-200 rounded-lg px-3 py-2" />
-        </div>
-
-        <div>
-          <label class="text-xs font-black text-slate-600">Opening Stock</label>
-          <input id="fStock" type="number" min="0" step="1" class="w-full border border-gray-200 rounded-lg px-3 py-2" />
-        </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Reorder Level</label>
-          <input id="fReorder" type="number" min="0" step="1" class="w-full border border-gray-200 rounded-lg px-3 py-2" value="5" />
-        </div>
-      </div>
-
-      <div class="flex flex-wrap justify-end gap-2 mt-5">
-        <button class="btn btn-outline" id="btnCancel">Cancel</button>
-        <button class="btn btn-primary" id="btnSave">Save</button>
-      </div>
-    </div>
+  <div id="toast" role="status" aria-live="polite">
+    <div class="title" id="toastTitle">Saved</div>
+    <div class="msg" id="toastMsg">Your purchase order has been saved.</div>
   </div>
-
-  <!-- ADJUST MODAL -->
-  <div id="adjModal" class="fixed inset-0 hidden items-center justify-center p-4 z-50 no-print">
-    <div class="modal-backdrop absolute inset-0"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h3 class="text-xl font-black text-slate-900">Adjust Stock</h3>
-          <p id="adjSku" class="text-xs text-slate-500 mono"></p>
-        </div>
-        <button id="adjClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">×</button>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-        <div>
-          <label class="text-xs font-black text-slate-600">Type</label>
-          <select id="adjType" class="w-full border border-gray-200 rounded-lg px-3 py-2">
-            <option value="IN">Stock In</option>
-            <option value="OUT">Stock Out</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-xs font-black text-slate-600">Quantity</label>
-          <input id="adjQty" type="number" min="1" step="1" class="w-full border border-gray-200 rounded-lg px-3 py-2" value="1" />
-        </div>
-        <div class="md:col-span-2">
-          <label class="text-xs font-black text-slate-600">Note (optional)</label>
-          <input id="adjNote" class="w-full border border-gray-200 rounded-lg px-3 py-2" placeholder="GRN #, Invoice #, reason..." />
-        </div>
-      </div>
-
-      <div class="flex flex-wrap justify-end gap-2 mt-5">
-        <button class="btn btn-outline" id="adjCancel">Cancel</button>
-        <button class="btn btn-success" id="adjApply">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST -->
-  <div class="toast hidden" id="toast"><div id="toastMsg"></div></div>
 
 <script>
-/**
- * Multi-page navigation depends on correct relative paths.
- * For files in the same folder, `href="file.html"` is the correct approach. :contentReference[oaicite:3]{index=3}
- */
+  // ===========================
+  // Helpers
+  // ===========================
+  const $ = (id) => document.getElementById(id);
 
-const STORE_KEY = "easy.inventory.v2";
-const MOVES_KEY = "easy.inventory.moves.v1";
-
-const $ = (id) => document.getElementById(id);
-
-function toast(msg){
-  $("toastMsg").textContent = msg;
-  $("toast").classList.remove("hidden");
-  setTimeout(()=> $("toast").classList.add("hidden"), 2800);
-}
-
-function money(n){
-  const x = Number(n || 0);
-  return "R" + x.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function nowISO(){
-  return new Date().toISOString();
-}
-
-function load(){
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
-  catch { return []; }
-}
-function save(data){
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-}
-function loadMoves(){
-  try { return JSON.parse(localStorage.getItem(MOVES_KEY) || "[]"); }
-  catch { return []; }
-}
-function saveMoves(m){
-  localStorage.setItem(MOVES_KEY, JSON.stringify(m.slice(0,50)));
-}
-
-let inventory = load();
-let movements = loadMoves();
-
-function normalizeSku(s){ return String(s||"").trim().toUpperCase(); }
-
-function rebuildCategoryOptions(){
-  const cats = Array.from(new Set(inventory.map(x => (x.category||"").trim()).filter(Boolean))).sort();
-  const sel = $("cat");
-  const cur = sel.value || "";
-  sel.innerHTML = `<option value="">All categories</option>` + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  sel.value = cats.includes(cur) ? cur : "";
-}
-
-function escapeHtml(str){
-  return String(str || "").replace(/[&<>"']/g, m => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-  }[m]));
-}
-
-function computeKPIs(){
-  const threshold = Number($("threshold").value || 0);
-  const products = inventory.length;
-  const totalUnits = inventory.reduce((a,x)=> a + Number(x.stock||0), 0);
-  const costValue = inventory.reduce((a,x)=> a + (Number(x.stock||0)*Number(x.cost||0)), 0);
-  const low = inventory.filter(x => Number(x.stock||0) <= Number(x.reorder||threshold)).length;
-
-  $("kpiProducts").textContent = String(products);
-  $("kpiUnits").textContent = String(totalUnits);
-  $("kpiCost").textContent = money(costValue);
-  $("kpiLow").textContent = String(low);
-}
-
-function render(){
-  rebuildCategoryOptions();
-  computeKPIs();
-
-  const q = ($("q").value || "").trim().toLowerCase();
-  const cat = ($("cat").value || "").trim().toLowerCase();
-  const threshold = Number($("threshold").value || 0);
-
-  const rows = $("rows");
-  rows.innerHTML = "";
-
-  const filtered = inventory.filter(x => {
-    const hay = `${x.sku} ${x.name} ${x.category}`.toLowerCase();
-    if(q && !hay.includes(q)) return false;
-    if(cat && String(x.category||"").toLowerCase() !== cat) return false;
-    return true;
-  });
-
-  filtered.sort((a,b)=> String(a.sku).localeCompare(String(b.sku)));
-
-  if(!filtered.length){
-    rows.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-500">No products found.</td></tr>`;
-    return;
+  function toast(title, msg){
+    const t = $("toast");
+    $("toastTitle").textContent = title || "OK";
+    $("toastMsg").textContent = msg || "";
+    t.classList.add("show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(()=> t.classList.remove("show"), 2600);
   }
 
-  filtered.forEach(item => {
-    const value = Number(item.stock||0) * Number(item.cost||0);
-    const isLow = Number(item.stock||0) <= Number(item.reorder||threshold);
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="p-3 mono">${escapeHtml(item.sku)}</td>
-      <td class="p-3">${escapeHtml(item.name)}</td>
-      <td class="p-3">${escapeHtml(item.category || "")}</td>
-      <td class="p-3 text-right mono">${money(item.cost)}</td>
-      <td class="p-3 text-right mono">${money(item.price)}</td>
-      <td class="p-3 text-right mono">${Number(item.stock||0)}</td>
-      <td class="p-3 text-right mono">${money(value)}</td>
-      <td class="p-3">
-        ${isLow ? `<span class="pill pill-low">LOW</span>` : `<span class="pill pill-ok">OK</span>`}
-      </td>
-      <td class="p-3 text-center no-print">
-        <div class="flex justify-center gap-2 flex-wrap">
-          <button class="btn btn-outline" data-edit="${escapeHtml(item.sku)}">Edit</button>
-          <button class="btn btn-outline" data-adjust="${escapeHtml(item.sku)}">Adjust</button>
-          <button class="btn btn-danger" data-del="${escapeHtml(item.sku)}">Delete</button>
-        </div>
-      </td>
-    `;
-    rows.appendChild(tr);
-  });
-
-  // wire actions (delegated)
-  rows.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openEdit(b.getAttribute("data-edit"))));
-  rows.querySelectorAll("[data-adjust]").forEach(b => b.addEventListener("click", () => openAdjust(b.getAttribute("data-adjust"))));
-  rows.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => removeSku(b.getAttribute("data-del"))));
-}
-
-function renderMoves(){
-  const tb = $("moves");
-  tb.innerHTML = "";
-  const list = movements.slice(0,50);
-  if(!list.length){
-    tb.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No movements yet.</td></tr>`;
-    return;
+  function escapeHtml(str){
+    return String(str || "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[m]));
   }
-  list.forEach(m => {
+
+  function symbolForCurrency(cur){
+    switch(cur){
+      case "USD": return "$";
+      case "EUR": return "€";
+      case "GBP": return "£";
+      case "ZAR":
+      default: return "R";
+    }
+  }
+
+  // Offline file saver (no external deps)
+  function saveAs(blob, filename){
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    } catch (err) {
+      console.error(err);
+      alert('Download failed. Your browser may not support programmatic downloads.');
+    }
+  }
+
+  function fmt(amount){
+    const cur = $("currency").value || "ZAR";
+    const sym = symbolForCurrency(cur);
+    const n = Number(amount || 0);
+    const fixed = n.toFixed(2);
+    const withSep = fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return sym + withSep;
+  }
+
+  function formatDateISO(iso){
+    if(!iso) return "";
+    const [y,m,d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  function setStatusBadge(){
+    const s = $("poStatus").value;
+    const badge = $("statusBadge");
+    const map = {
+      draft: {cls:"badge badge-draft", icon:"fa-pen", text:"DRAFT"},
+      sent: {cls:"badge badge-sent", icon:"fa-paper-plane", text:"SENT"},
+      approved: {cls:"badge badge-approved", icon:"fa-circle-check", text:"APPROVED"},
+      received: {cls:"badge badge-received", icon:"fa-box-open", text:"RECEIVED"},
+    };
+    const v = map[s] || map.draft;
+    badge.className = v.cls;
+    badge.innerHTML = `<i class="fa-solid ${v.icon}"></i> ${v.text}`;
+  }
+
+  // ===========================
+  // PO Number Generator (sequential, persistent)
+  // ===========================
+  const PO_SEQ_KEY = "easypo.seq.v1";
+
+  function nextPoNumber(){
+    const raw = localStorage.getItem(PO_SEQ_KEY);
+    const n = raw ? Number(raw) : 1;
+    const next = n + 1;
+    localStorage.setItem(PO_SEQ_KEY, String(next));
+    return "PO" + String(n).padStart(7,"0");
+  }
+
+  function newPoNumber(){
+    $("poNumber").value = nextPoNumber();
+  }
+
+  // ===========================
+  // Line items
+  // ===========================
+  let lineCounter = 0;
+
+  function addLineItem(prefill={}){
+    const tbody = $("itemsBody");
+    const rowId = "li-" + (lineCounter++);
+
+    const defaultVat = Number($("defaultVat").value || 0).toFixed(2);
+
     const tr = document.createElement("tr");
+    tr.id = rowId;
+    tr.className = "line-item";
+
     tr.innerHTML = `
-      <td class="p-3 mono">${escapeHtml(new Date(m.ts).toLocaleString())}</td>
-      <td class="p-3 mono">${escapeHtml(m.sku)}</td>
-      <td class="p-3">${m.type === "IN" ? `<span class="pill pill-ok">IN</span>` : `<span class="pill pill-low">OUT</span>`}</td>
-      <td class="p-3 text-right mono">${Number(m.qty||0)}</td>
-      <td class="p-3">${escapeHtml(m.note||"")}</td>
+      <td class="border border-gray-200 p-2">
+        <input type="text" class="w-full border border-gray-200 rounded-md px-2 py-1 item-desc"
+          placeholder="Description" value="${escapeHtml(prefill.desc || "")}">
+      </td>
+      <td class="border border-gray-200 p-2">
+        <input type="number" min="0" step="1" class="w-full border border-gray-200 rounded-md px-2 py-1 text-center item-qty"
+          value="${escapeHtml(prefill.qty ?? 1)}">
+      </td>
+      <td class="border border-gray-200 p-2">
+        <input type="text" class="w-full border border-gray-200 rounded-md px-2 py-1 text-center item-unit"
+          placeholder="ea / hrs / kg" value="${escapeHtml(prefill.unit ?? "")}">
+      </td>
+      <td class="border border-gray-200 p-2">
+        <input type="number" min="0" step="0.01" class="w-full border border-gray-200 rounded-md px-2 py-1 text-center item-rate"
+          value="${escapeHtml(prefill.rate ?? "0.00")}">
+      </td>
+      <td class="border border-gray-200 p-2">
+        <input type="number" min="0" max="100" step="0.01" class="w-full border border-gray-200 rounded-md px-2 py-1 text-center item-disc"
+          value="${escapeHtml(prefill.disc ?? "0.00")}">
+      </td>
+      <td class="border border-gray-200 p-2">
+        <input type="number" min="0" max="100" step="0.01" class="w-full border border-gray-200 rounded-md px-2 py-1 text-center item-vat"
+          value="${escapeHtml(prefill.vat ?? defaultVat)}">
+      </td>
+      <td class="border border-gray-200 p-2 text-right mono item-excl">${fmt(0)}</td>
+      <td class="border border-gray-200 p-2 text-right mono item-incl">${fmt(0)}</td>
+      <td class="border border-gray-200 p-2 text-center no-print">
+        <button class="text-red-600 hover:text-red-800" title="Delete line">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
     `;
-    tb.appendChild(tr);
-  });
-}
 
-function openModal(){
-  $("modal").classList.remove("hidden");
-  $("modal").classList.add("flex");
-}
-function closeModal(){
-  $("modal").classList.add("hidden");
-  $("modal").classList.remove("flex");
-}
-function openAdj(){
-  $("adjModal").classList.remove("hidden");
-  $("adjModal").classList.add("flex");
-}
-function closeAdj(){
-  $("adjModal").classList.add("hidden");
-  $("adjModal").classList.remove("flex");
-}
+    tbody.appendChild(tr);
 
-let editMode = { on:false, sku:null };
+    // delete
+    tr.querySelector("button").addEventListener("click", () => {
+      tr.remove();
+      calculateTotals();
+      autosave();
+    });
 
-function clearForm(){
-  ["fSku","fCat","fName","fCost","fPrice","fStock","fReorder"].forEach(id => $(id).value = "");
-  $("fReorder").value = "5";
-}
+    // recalc on changes
+    tr.querySelectorAll("input").forEach(inp=>{
+      inp.addEventListener("input", () => {
+        calculateTotals();
+        autosave();
+      });
+    });
 
-function openAdd(){
-  editMode = { on:false, sku:null };
-  $("modalTitle").textContent = "Add Product";
-  clearForm();
-  $("fSku").disabled = false;
-  openModal();
-}
+    calculateTotals();
+  }
 
-function openEdit(sku){
-  const s = normalizeSku(sku);
-  const item = inventory.find(x => x.sku === s);
-  if(!item){ toast("Product not found: " + s); return; }
+  function readLineItems(){
+    const items = [];
+    document.querySelectorAll(".line-item").forEach(tr=>{
+      items.push({
+        desc: tr.querySelector(".item-desc").value || "",
+        qty: Number(tr.querySelector(".item-qty").value || 0),
+        unit: tr.querySelector(".item-unit").value || "",
+        rate: Number(tr.querySelector(".item-rate").value || 0),
+        disc: Number(tr.querySelector(".item-disc").value || 0),
+        vat: Number(tr.querySelector(".item-vat").value || 0),
+      });
+    });
+    return items;
+  }
 
-  editMode = { on:true, sku:s };
-  $("modalTitle").textContent = "Edit Product";
-  $("fSku").value = item.sku;
-  $("fCat").value = item.category || "";
-  $("fName").value = item.name || "";
-  $("fCost").value = Number(item.cost||0);
-  $("fPrice").value = Number(item.price||0);
-  $("fStock").value = Number(item.stock||0);
-  $("fReorder").value = Number(item.reorder||5);
-  $("fSku").disabled = true;
-  openModal();
-}
+  // ===========================
+  // Totals
+  // ===========================
+  function calculateTotals(){
+    setStatusBadge();
 
-function upsert(){
-  const sku = normalizeSku($("fSku").value);
-  const name = ($("fName").value || "").trim();
-  const category = ($("fCat").value || "").trim();
+    const overallDiscPct = Number($("overallDiscount").value || 0) / 100;
+    const shipping = Number($("shipping").value || 0);
 
-  const cost = Number($("fCost").value || 0);
-  const price = Number($("fPrice").value || 0);
-  const stock = Math.max(0, Math.floor(Number($("fStock").value || 0)));
-  const reorder = Math.max(0, Math.floor(Number($("fReorder").value || 0)));
+    let subtotalExcl = 0;
+    let lineDiscountTotal = 0;
+    let vatTotal = 0;
 
-  if(!sku){ toast("SKU is required."); return; }
-  if(!name){ toast("Name is required."); return; }
-  if(cost < 0 || price < 0){ toast("Prices must be >= 0."); return; }
+    document.querySelectorAll(".line-item").forEach(tr=>{
+      const qty = Number(tr.querySelector(".item-qty").value || 0);
+      const rate = Number(tr.querySelector(".item-rate").value || 0);
+      const discPct = Number(tr.querySelector(".item-disc").value || 0) / 100;
+      const vatPct = Number(tr.querySelector(".item-vat").value || 0) / 100;
 
-  if(!editMode.on){
-    if(inventory.some(x => x.sku === sku)){
-      toast("SKU already exists: " + sku);
+      const base = qty * rate;
+      const discAmt = base * discPct;
+      const excl = Math.max(0, base - discAmt);
+      const vatAmt = excl * vatPct;
+      const incl = excl + vatAmt;
+
+      subtotalExcl += excl;
+      lineDiscountTotal += discAmt;
+      vatTotal += vatAmt;
+
+      tr.querySelector(".item-excl").textContent = fmt(excl);
+      tr.querySelector(".item-incl").textContent = fmt(incl);
+    });
+
+    const overallDiscountAmt = subtotalExcl * overallDiscPct;
+    const discountedSubtotal = Math.max(0, subtotalExcl - overallDiscountAmt);
+
+    // Apply proportional VAT reduction due to overall discount
+    const vatAfterOverallDisc = Math.max(0, vatTotal - (vatTotal * overallDiscPct));
+
+    const grand = discountedSubtotal + vatAfterOverallDisc + shipping;
+
+    $("tSubtotal").textContent = fmt(subtotalExcl);
+    $("tLineDiscount").textContent = fmt(lineDiscountTotal);
+    $("tOverallDiscount").textContent = fmt(overallDiscountAmt);
+    $("tVat").textContent = fmt(vatAfterOverallDisc);
+    $("tShipping").textContent = fmt(shipping);
+    $("tGrand").textContent = fmt(grand);
+
+    return {
+      subtotalExcl,
+      lineDiscountTotal,
+      overallDiscountAmt,
+      vat: vatAfterOverallDisc,
+      shipping,
+      grand
+    };
+  }
+
+  // ===========================
+  // Logo handling (embed as DataURL)
+  // ===========================
+  let buyerLogoDataUrl = null;
+
+  function handleLogoUpload(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      buyerLogoDataUrl = e.target.result;
+      const preview = $("buyerLogoPreview");
+      preview.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = buyerLogoDataUrl;
+      img.className = "h-14 object-contain";
+      preview.appendChild(img);
+      autosave();
+      toast("Logo updated", "Buyer logo has been embedded.");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ===========================
+  // Preview / Template fill
+  // ===========================
+  function buildTemplateDom(){
+    const tpl = $("poTemplate").firstElementChild.cloneNode(true);
+
+    // logo
+    const logoWrap = tpl.querySelector("#tplLogo");
+    logoWrap.innerHTML = "";
+    if(buyerLogoDataUrl){
+      const img = document.createElement("img");
+      img.src = buyerLogoDataUrl;
+      img.style.height = "60px";
+      img.style.objectFit = "contain";
+      logoWrap.appendChild(img);
+    }
+
+    // buyer
+    tpl.querySelector("#tplBuyerName").textContent = $("buyerName").value || "Buyer";
+    tpl.querySelector("#tplBuyerAddress").textContent = $("buyerAddress").value || "";
+    tpl.querySelector("#tplBuyerVat").textContent = $("buyerVat").value || "";
+    tpl.querySelector("#tplBuyerReg").textContent = $("buyerReg").value || "";
+    tpl.querySelector("#tplBuyerEmail").textContent = $("buyerEmail").value || "";
+    tpl.querySelector("#tplBuyerPhone").textContent = $("buyerPhone").value || "";
+    tpl.querySelector("#tplBuyerWebsite").textContent = $("buyerWebsite").value || "";
+
+    // po meta
+    tpl.querySelector("#tplPoNumber").textContent = $("poNumber").value || "";
+    tpl.querySelector("#tplPoRef").textContent = $("poReference").value || "";
+    tpl.querySelector("#tplPoDate").textContent = formatDateISO($("poDate").value) || "";
+    tpl.querySelector("#tplDeliveryDate").textContent = formatDateISO($("deliveryDate").value) || "";
+    tpl.querySelector("#tplPoStatus").textContent = ($("poStatus").value || "draft").toUpperCase();
+    tpl.querySelector("#tplCurrency").textContent = $("currency").value || "ZAR";
+    tpl.querySelector("#tplPayTerms").textContent = $("paymentTerms").value || "";
+
+    // supplier
+    tpl.querySelector("#tplSupplierName").textContent = $("supplierName").value || "Supplier";
+    tpl.querySelector("#tplSupplierAddress").textContent = $("supplierAddress").value || "";
+    tpl.querySelector("#tplSupplierVat").textContent = $("supplierVat").value || "";
+    tpl.querySelector("#tplSupplierReg").textContent = $("supplierReg").value || "";
+    tpl.querySelector("#tplSupplierEmail").textContent = $("supplierEmail").value || "";
+    tpl.querySelector("#tplSupplierPhone").textContent = $("supplierPhone").value || "";
+
+    // delivery address
+    tpl.querySelector("#tplDeliveryAddress").textContent = $("deliveryAddress").value || "";
+
+    // items
+    const items = readLineItems();
+    const tbody = tpl.querySelector("#tplItems");
+    tbody.innerHTML = "";
+
+    items.forEach(i=>{
+      const base = i.qty * i.rate;
+      const discAmt = base * (i.disc/100);
+      const excl = Math.max(0, base - discAmt);
+      const vatAmt = excl * (i.vat/100);
+      const incl = excl + vatAmt;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="border border-gray-200 p-2">${escapeHtml(i.desc || "Item")}</td>
+        <td class="border border-gray-200 p-2 text-center">${Number(i.qty||0)}</td>
+        <td class="border border-gray-200 p-2 text-center">${escapeHtml(i.unit || "")}</td>
+        <td class="border border-gray-200 p-2 text-right mono">${fmt(i.rate)}</td>
+        <td class="border border-gray-200 p-2 text-center">${Number(i.disc||0).toFixed(2)}%</td>
+        <td class="border border-gray-200 p-2 text-center">${Number(i.vat||0).toFixed(2)}%</td>
+        <td class="border border-gray-200 p-2 text-right mono">${fmt(excl)}</td>
+        <td class="border border-gray-200 p-2 text-right mono">${fmt(incl)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // totals
+    const t = calculateTotals();
+    tpl.querySelector("#tplSubtotal").textContent = fmt(t.subtotalExcl);
+    tpl.querySelector("#tplLineDisc").textContent = fmt(t.lineDiscountTotal);
+    tpl.querySelector("#tplOverallDisc").textContent = fmt(t.overallDiscountAmt);
+    tpl.querySelector("#tplVat").textContent = fmt(t.vat);
+    tpl.querySelector("#tplShipping").textContent = fmt(t.shipping);
+    tpl.querySelector("#tplGrand").textContent = fmt(t.grand);
+
+    // notes/terms
+    tpl.querySelector("#tplNotes").textContent = $("notes").value || "";
+    tpl.querySelector("#tplTerms").textContent = $("terms").value || "";
+
+    return tpl;
+  }
+
+  function openPreview(){
+    const modal = $("previewModal");
+    const content = $("previewContent");
+    content.innerHTML = "";
+    content.appendChild(buildTemplateDom());
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closePreview(){
+    const modal = $("previewModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+
+  // ===========================
+  // Exports (offline safe)
+  // ===========================
+  function exportPDF(){
+    // Offline-friendly: open preview and invoke print dialog (Save as PDF)
+    openPreview();
+    setTimeout(() => window.print(), 100);
+    toast("PDF export", "Use Print → Save as PDF in the dialog.");
+  }
+
+  function exportJSON(){
+    const state = serializeState();
+    const filename = ($("poNumber").value || "purchase-order") + ".json";
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    saveAs(blob, filename);
+    toast("JSON exported", filename);
+  }
+
+  function exportCSV(){
+    const items = readLineItems();
+    const headers = ["Description","Qty","Unit","Rate","Disc%","VAT%"];
+    const rows = items.map(i => [
+      (i.desc || "").replaceAll('"','""'),
+      i.qty,
+      (i.unit || "").replaceAll('"','""'),
+      i.rate,
+      i.disc,
+      i.vat
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(v => `"${String(v ?? "")}"`).join(","))
+      .join("\n");
+
+    const filename = ($("poNumber").value || "purchase-order") + ".csv";
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    saveAs(blob, filename);
+    toast("CSV exported", filename);
+  }
+
+  function exportExcel(){
+    // Offline-safe: HTML table in .xls (opens in Excel)
+    try {
+      const templateDom = buildTemplateDom();
+      const clone = templateDom.cloneNode(true);
+
+      const wrapperTable = document.createElement('table');
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.appendChild(clone);
+      tr.appendChild(td);
+      wrapperTable.appendChild(tr);
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${wrapperTable.outerHTML}</body></html>`;
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+      const filename = ($("poNumber").value || 'purchase-order') + '.xls';
+      saveAs(blob, filename);
+      toast("Excel exported", filename);
+    } catch (err) {
+      console.error(err);
+      alert('Excel export failed.');
+    }
+  }
+
+  function exportWord(){
+    // Offline-safe: HTML in .doc (opens in Word)
+    try {
+      const dom = buildTemplateDom();
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(dom);
+
+      const htmlContent = `<!DOCTYPE html><html lang="en-ZA"><head><meta charset="UTF-8"><title>Purchase Order</title></head><body>${wrapper.innerHTML}</body></html>`;
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const filename = ($("poNumber").value || 'purchase-order') + '.doc';
+      saveAs(blob, filename);
+      toast("Word exported", filename);
+    } catch (err) {
+      console.error(err);
+      alert('Word export failed.');
+    }
+  }
+
+  // ===========================
+  // Print (manual)
+  // ===========================
+  function printManual(){
+    const dom = buildTemplateDom();
+    const w = window.open("", "_blank");
+    if(!w){
+      alert("Pop-up blocked. Allow popups to print.");
       return;
     }
-    inventory.push({ sku, name, category, cost, price, stock, reorder });
-    save(inventory);
-    toast("Added: " + sku);
-  } else {
-    const i = inventory.findIndex(x => x.sku === editMode.sku);
-    if(i < 0){ toast("Missing record for: " + editMode.sku); return; }
-    inventory[i] = { ...inventory[i], name, category, cost, price, stock, reorder };
-    save(inventory);
-    toast("Updated: " + editMode.sku);
+
+    const style = `
+      <style>
+        body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; margin:0; padding:20px; background:#fff;}
+        .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+        table{width:100%; border-collapse:collapse;}
+        th,td{border:1px solid #e5e7eb; padding:8px;}
+        th{background:#f9fafb;}
+      </style>
+    `;
+
+    w.document.write(`<html><head><title>Print Purchase Order</title>${style}</head><body></body></html>`);
+    w.document.body.appendChild(dom);
+    w.document.close();
+    w.focus();
+    w.print();
   }
 
-  closeModal();
-  render();
-}
+  // ===========================
+  // CSV Import
+  // ===========================
+  function parseCSV(text){
+    // CSV: Description,Qty,Unit,Rate,Disc%,VAT%
+    const rows = [];
+    let i=0, field="", row=[], inQuotes=false;
 
-function removeSku(sku){
-  const s = normalizeSku(sku);
-  const idx = inventory.findIndex(x => x.sku === s);
-  if(idx < 0){ toast("Not found: " + s); return; }
-  if(!confirm("Delete product " + s + "?")) return;
+    const pushField = () => { row.push(field); field=""; };
+    const pushRow = () => { if(row.length) rows.push(row); row=[]; };
 
-  inventory.splice(idx, 1);
-  save(inventory);
-  toast("Deleted: " + s);
-  render();
-}
-
-let adjTargetSku = null;
-
-function openAdjust(sku){
-  const s = normalizeSku(sku);
-  const item = inventory.find(x => x.sku === s);
-  if(!item){ toast("Product not found: " + s); return; }
-
-  adjTargetSku = s;
-  $("adjSku").textContent = s + " • Current stock: " + Number(item.stock||0);
-  $("adjType").value = "IN";
-  $("adjQty").value = "1";
-  $("adjNote").value = "";
-  openAdj();
-}
-
-function applyAdjust(){
-  const s = adjTargetSku;
-  const item = inventory.find(x => x.sku === s);
-  if(!item){ toast("Product not found: " + s); return; }
-
-  const type = $("adjType").value;
-  const qty = Math.max(1, Math.floor(Number($("adjQty").value || 1)));
-  const note = ($("adjNote").value || "").trim();
-
-  if(type === "OUT" && qty > Number(item.stock||0)){
-    toast("Cannot stock-out more than current stock.");
-    return;
-  }
-
-  item.stock = Number(item.stock||0) + (type === "IN" ? qty : -qty);
-  save(inventory);
-
-  movements.unshift({ ts: nowISO(), sku: s, type, qty, note });
-  saveMoves(movements);
-
-  toast(`Adjusted ${s}: ${type} ${qty}`);
-  closeAdj();
-  render();
-  renderMoves();
-}
-
-function exportCSV(){
-  const header = ["SKU","Name","Category","Cost","Price","Stock","ReorderLevel"];
-  const lines = inventory
-    .slice()
-    .sort((a,b)=> String(a.sku).localeCompare(String(b.sku)))
-    .map(x => [
-      x.sku, x.name, x.category||"", x.cost, x.price, x.stock, x.reorder
-    ].map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(","));
-  const csv = [header.join(","), ...lines].join("\n");
-
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "easy-inventory.csv";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 0);
-}
-
-function parseCSV(text){
-  // Minimal CSV parser (handles quotes, commas in quotes)
-  const rows = [];
-  let i=0, field="", row=[], inQuotes=false;
-
-  const pushField = () => { row.push(field); field=""; };
-  const pushRow = () => { if(row.length) rows.push(row); row=[]; };
-
-  while(i<text.length){
-    const c = text[i];
-    if(inQuotes){
-      if(c === '"'){
-        if(text[i+1] === '"'){ field += '"'; i++; }
-        else inQuotes = false;
-      } else field += c;
-    } else {
-      if(c === '"') inQuotes = true;
-      else if(c === ',') pushField();
-      else if(c === '\n'){ pushField(); pushRow(); }
-      else if(c !== '\r') field += c;
-    }
-    i++;
-  }
-  pushField(); pushRow();
-  return rows;
-}
-
-function importCSV(file){
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target.result || "";
-    const rows = parseCSV(text).filter(r => r.join("").trim().length);
-
-    if(!rows.length){ toast("CSV is empty."); return; }
-
-    // Expect: SKU,Name,Category,Cost,Price,Stock,ReorderLevel
-    let start = 0;
-    const head = (rows[0][0]||"").toLowerCase();
-    if(head.includes("sku")) start = 1;
-
-    let imported = 0, updated = 0, skipped = 0;
-
-    for(let r=start; r<rows.length; r++){
-      const [skuRaw,name,category,cost,price,stock,reorder] = rows[r];
-      const sku = normalizeSku(skuRaw);
-      if(!sku || !String(name||"").trim()){ skipped++; continue; }
-
-      const rec = {
-        sku,
-        name: String(name||"").trim(),
-        category: String(category||"").trim(),
-        cost: Number(cost||0),
-        price: Number(price||0),
-        stock: Math.max(0, Math.floor(Number(stock||0))),
-        reorder: Math.max(0, Math.floor(Number(reorder||5)))
-      };
-
-      const idx = inventory.findIndex(x => x.sku === sku);
-      if(idx >= 0){
-        inventory[idx] = { ...inventory[idx], ...rec };
-        updated++;
+    while(i<text.length){
+      const c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
       } else {
-        inventory.push(rec);
-        imported++;
+        if(c === '"') inQuotes = true;
+        else if(c === ','){ pushField(); }
+        else if(c === '\n'){ pushField(); pushRow(); }
+        else if(c !== '\r'){ field += c; }
       }
+      i++;
+    }
+    pushField(); pushRow();
+    return rows;
+  }
+
+  function importCSV(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result || "";
+      const rows = parseCSV(text).filter(r => r.join("").trim().length);
+
+      let startIdx = 0;
+      if(rows[0] && rows[0][0] && rows[0][0].toLowerCase().includes("description")) startIdx = 1;
+
+      for(let r=startIdx; r<rows.length; r++){
+        const [desc, qty, unit, rate, disc, vat] = rows[r];
+        addLineItem({
+          desc: (desc||"").trim(),
+          qty: Number((qty||"1").trim()),
+          unit: (unit||"").trim(),
+          rate: Number((rate||"0").trim()),
+          disc: Number((disc||"0").toString().replace("%","").trim()),
+          vat: Number((vat||$("defaultVat").value||"0").toString().replace("%","").trim()),
+        });
+      }
+      calculateTotals();
+      autosave();
+      toast("CSV imported", "Line items have been added.");
+    };
+    reader.readAsText(file);
+  }
+
+  // ===========================
+  // Save/Load templates + history (localStorage)
+  // ===========================
+  const AUTOSAVE_KEY = "easypo.autosave.v1";
+  const TEMPLATES_KEY = "easypo.templates.v1";
+  const HISTORY_KEY = "easypo.history.v1";
+
+  function serializeState(){
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      buyerLogoDataUrl,
+      fields: {
+        buyerName: $("buyerName").value,
+        buyerVat: $("buyerVat").value,
+        buyerReg: $("buyerReg").value,
+        buyerEmail: $("buyerEmail").value,
+        buyerPhone: $("buyerPhone").value,
+        buyerWebsite: $("buyerWebsite").value,
+        buyerAddress: $("buyerAddress").value,
+
+        supplierName: $("supplierName").value,
+        supplierVat: $("supplierVat").value,
+        supplierReg: $("supplierReg").value,
+        supplierEmail: $("supplierEmail").value,
+        supplierPhone: $("supplierPhone").value,
+        supplierAddress: $("supplierAddress").value,
+
+        poNumber: $("poNumber").value,
+        poReference: $("poReference").value,
+        poDate: $("poDate").value,
+        deliveryDate: $("deliveryDate").value,
+        currency: $("currency").value,
+        poStatus: $("poStatus").value,
+
+        overallDiscount: $("overallDiscount").value,
+        shipping: $("shipping").value,
+        defaultVat: $("defaultVat").value,
+        paymentTerms: $("paymentTerms").value,
+        deliveryAddress: $("deliveryAddress").value,
+
+        notes: $("notes").value,
+        terms: $("terms").value,
+      },
+      items: readLineItems()
+    };
+  }
+
+  function applyState(state){
+    if(!state) return;
+    buyerLogoDataUrl = state.buyerLogoDataUrl || null;
+
+    // Logo preview
+    const preview = $("buyerLogoPreview");
+    preview.innerHTML = "";
+    if(buyerLogoDataUrl){
+      const img = document.createElement("img");
+      img.src = buyerLogoDataUrl;
+      img.className = "h-14 object-contain";
+      preview.appendChild(img);
+    } else {
+      preview.innerHTML = `<p class="text-sm text-slate-400">No logo uploaded</p>`;
     }
 
-    save(inventory);
-    toast(`Import done. New: ${imported}, Updated: ${updated}, Skipped: ${skipped}`);
-    render();
-  };
-  reader.readAsText(file);
-}
+    const f = state.fields || {};
+    Object.keys(f).forEach(k=>{
+      if($(k)) $(k).value = f[k] ?? "";
+    });
 
-function seed(){
-  if(!confirm("Seed demo data? This will ADD items (not overwrite).")) return;
-  const demo = [
-    { sku:"MS365-BUSPREM", name:"Microsoft 365 Business Premium (Monthly)", category:"Licenses", cost: 480, price: 720, stock: 25, reorder: 5 },
-    { sku:"LENOVO-THINKPAD-14", name:"Lenovo ThinkPad 14\" (Example)", category:"Hardware", cost: 15000, price: 18900, stock: 3, reorder: 5 },
-    { sku:"LABOUR-REMOTE-1H", name:"Remote Support (1 Hour)", category:"Services", cost: 0, price: 650, stock: 9999, reorder: 0 }
-  ];
-  demo.forEach(d => {
-    if(!inventory.some(x => x.sku === d.sku)) inventory.push(d);
-  });
-  save(inventory);
-  toast("Demo data added.");
-  render();
-}
+    // items
+    $("itemsBody").innerHTML = "";
+    (state.items || []).forEach(it => addLineItem(it));
+    if(!(state.items || []).length) addLineItem();
 
-function clearMoves(){
-  if(!confirm("Clear movement log?")) return;
-  movements = [];
-  saveMoves(movements);
-  renderMoves();
-  toast("Movements cleared.");
-}
-
-/**
- * Safe link guard:
- * - In static hosting (GitHub Pages), navigation only works if the target file exists.
- * - This handler checks existence first; if missing, it shows a toast instead of a dead click.
- */
-async function safeLinkHandler(e){
-  const a = e.currentTarget;
-  const href = a.getAttribute("href");
-  if(!href || href.startsWith("#") || href.startsWith("http")) return;
-
-  try{
-    const res = await fetch(href, { method:"HEAD", cache:"no-store" });
-    if(!res.ok) throw new Error("Missing");
-    window.location.href = href;
-  } catch {
-    e.preventDefault();
-    toast("Missing file: " + href + " (create it in the same folder).");
+    calculateTotals();
+    setStatusBadge();
   }
-}
 
-function bind(){
-  // links
-  document.querySelectorAll("a[data-safe-link]").forEach(a => a.addEventListener("click", safeLinkHandler));
+  function autosave(){
+    try{
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(serializeState()));
+    } catch(e){
+      console.warn("Autosave failed:", e);
+    }
+  }
 
-  // filters
-  ["q","cat","threshold"].forEach(id => {
-    $(id).addEventListener("input", render);
-    $(id).addEventListener("change", render);
+  function loadAutosave(){
+    try{
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if(!raw) return false;
+      applyState(JSON.parse(raw));
+      return true;
+    } catch(e){
+      console.warn("Autosave load failed:", e);
+      return false;
+    }
+  }
+
+  function loadTemplates(){
+    try{ return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || "[]"); } catch { return []; }
+  }
+
+  function saveTemplate(){
+    const name = prompt("Template name (e.g., 'Default Supplier PO'):");
+    if(!name) return;
+    const state = serializeState();
+    state.templateName = name;
+
+    const templates = loadTemplates();
+    templates.push(state);
+
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    toast("Template saved", name);
+  }
+
+  function pickAndLoadTemplate(){
+    const templates = loadTemplates();
+    if(!templates.length){
+      alert("No templates saved yet.");
+      return;
+    }
+    const names = templates.map((t,i)=> `${i+1}) ${t.templateName || ("Template " + (i+1))}`).join("\n");
+    const choice = prompt("Choose a template number:\n\n" + names);
+    if(!choice) return;
+    const idx = Number(choice) - 1;
+    if(idx < 0 || idx >= templates.length){
+      alert("Invalid choice.");
+      return;
+    }
+    applyState(templates[idx]);
+    autosave();
+    toast("Template loaded", templates[idx].templateName || "Template");
+  }
+
+  function loadHistory(){
+    try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+  }
+
+  function saveToHistory(){
+    // Store as array of records keyed by PO number for listing
+    const state = serializeState();
+    const po = state.fields?.poNumber || $("poNumber").value || "";
+    if(!po){
+      alert("PO number is required.");
+      return;
+    }
+    const history = loadHistory();
+
+    // Upsert by poNumber
+    const idx = history.findIndex(h => h?.fields?.poNumber === po);
+    if(idx >= 0) history[idx] = state;
+    else history.unshift(state);
+
+    // keep last 100
+    if(history.length > 100) history.length = 100;
+
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    refreshHistorySelect();
+    toast("Saved to history", po);
+  }
+
+  function refreshHistorySelect(){
+    const sel = $("historySelect");
+    if(!sel) return;
+    const history = loadHistory();
+
+    sel.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "History: Select PO...";
+    sel.appendChild(opt0);
+
+    history.forEach(h=>{
+      const po = h?.fields?.poNumber || "UNKNOWN";
+      const supplier = h?.fields?.supplierName || "";
+      const date = h?.fields?.poDate || "";
+      const opt = document.createElement("option");
+      opt.value = po;
+      opt.textContent = `${po} • ${supplier}${date ? " • " + date : ""}`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function loadFromHistory(poNumber){
+    const history = loadHistory();
+    const found = history.find(h => h?.fields?.poNumber === poNumber);
+    if(!found){
+      alert("PO not found in history.");
+      return;
+    }
+    applyState(found);
+    autosave();
+    toast("Loaded from history", poNumber);
+  }
+
+  function deleteSelectedFromHistory(){
+    const sel = $("historySelect");
+    const po = sel.value;
+    if(!po){
+      alert("Select a PO in History first.");
+      return;
+    }
+    if(!confirm(`Delete saved PO ${po} from history?`)) return;
+
+    const history = loadHistory().filter(h => h?.fields?.poNumber !== po);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    refreshHistorySelect();
+    toast("Deleted from history", po);
+  }
+
+  function resetForm(){
+    if(!confirm("Reset the purchase order form? (Templates & history remain saved)")) return;
+
+    buyerLogoDataUrl = null;
+    $("buyerLogo").value = "";
+    $("buyerLogoPreview").innerHTML = `<p class="text-sm text-slate-400">No logo uploaded</p>`;
+
+    // Clear fields
+    [
+      "buyerName","buyerVat","buyerReg","buyerEmail","buyerPhone","buyerWebsite","buyerAddress",
+      "supplierName","supplierVat","supplierReg","supplierEmail","supplierPhone","supplierAddress",
+      "poReference","paymentTerms","deliveryAddress","notes","terms"
+    ].forEach(id => { if($(id)) $(id).value = ""; });
+
+    $("currency").value = "ZAR";
+    $("poStatus").value = "draft";
+    $("overallDiscount").value = "0.00";
+    $("shipping").value = "0.00";
+    $("defaultVat").value = "15.00";
+
+    // Dates + new number
+    const today = new Date();
+    $("poDate").value = today.toISOString().split("T")[0];
+    const del = new Date();
+    del.setDate(del.getDate()+7);
+    $("deliveryDate").value = del.toISOString().split("T")[0];
+    newPoNumber();
+
+    // Items
+    $("itemsBody").innerHTML = "";
+    addLineItem();
+
+    calculateTotals();
+    autosave();
+    refreshHistorySelect();
+    toast("Reset", "New purchase order created.");
+  }
+
+  // ===========================
+  // Init + Events
+  // ===========================
+  function bind(){
+    // meta changes recalc
+    ["overallDiscount","shipping","defaultVat","currency","poStatus"].forEach(id=>{
+      $(id).addEventListener("input", () => { calculateTotals(); autosave(); });
+      $(id).addEventListener("change", () => { calculateTotals(); autosave(); });
+    });
+
+    // general fields autosave
+    [
+      "buyerName","buyerVat","buyerReg","buyerEmail","buyerPhone","buyerWebsite","buyerAddress",
+      "supplierName","supplierVat","supplierReg","supplierEmail","supplierPhone","supplierAddress",
+      "poNumber","poReference","poDate","deliveryDate","paymentTerms","deliveryAddress",
+      "notes","terms"
+    ].forEach(id=>{
+      $(id).addEventListener("input", autosave);
+      $(id).addEventListener("change", autosave);
+    });
+
+    // logo
+    $("buyerLogo").addEventListener("change", (e)=> handleLogoUpload(e.target.files[0]));
+
+    // buttons
+    $("btnAddLine").addEventListener("click", ()=> { addLineItem(); autosave(); });
+    $("btnPreview").addEventListener("click", openPreview);
+    $("btnClosePreview").addEventListener("click", closePreview);
+    $("btnClosePreviewBottom").addEventListener("click", closePreview);
+    $("previewModal").addEventListener("click", (e)=>{ if(e.target === $("previewModal")) closePreview(); });
+
+    $("btnPDF").addEventListener("click", exportPDF);
+    $("btnPDF2").addEventListener("click", exportPDF);
+    $("btnWord").addEventListener("click", exportWord);
+    $("btnExcel").addEventListener("click", exportExcel);
+    $("btnCSV").addEventListener("click", exportCSV);
+    $("btnJSON").addEventListener("click", exportJSON);
+    $("btnPrint").addEventListener("click", printManual);
+
+    $("btnSaveTemplate").addEventListener("click", saveTemplate);
+    $("btnLoadTemplate").addEventListener("click", pickAndLoadTemplate);
+    $("btnReset").addEventListener("click", resetForm);
+
+    $("btnNewNumber").addEventListener("click", ()=> { newPoNumber(); autosave(); toast("PO number updated", $("poNumber").value); });
+    $("btnMarkReceived").addEventListener("click", ()=>{
+      $("poStatus").value = "received";
+      calculateTotals();
+      autosave();
+      toast("Status updated", "Marked as RECEIVED.");
+    });
+
+    // CSV import
+    $("btnImportCSV").addEventListener("click", ()=> $("csvFile").click());
+    $("csvFile").addEventListener("change", (e)=>{
+      importCSV(e.target.files[0]);
+      e.target.value = "";
+    });
+
+    // Save to history
+    $("btnSavePO").addEventListener("click", saveToHistory);
+
+    // History select
+    $("historySelect").addEventListener("change", (e)=>{
+      const po = e.target.value;
+      if(po) loadFromHistory(po);
+    });
+    $("btnDeleteSaved").addEventListener("click", deleteSelectedFromHistory);
+
+    // initial line item
+    if(document.querySelectorAll(".line-item").length === 0){
+      addLineItem();
+    }
+  }
+
+  function init(){
+    // Defaults
+    const today = new Date();
+    $("poDate").value = today.toISOString().split("T")[0];
+    const del = new Date();
+    del.setDate(del.getDate()+7);
+    $("deliveryDate").value = del.toISOString().split("T")[0];
+
+    // PO number
+    if(!$("poNumber").value) newPoNumber();
+
+    // Load autosave if present
+    const loaded = loadAutosave();
+    if(!loaded){
+      // ensure at least one row
+      $("itemsBody").innerHTML = "";
+      addLineItem();
+      calculateTotals();
+      autosave();
+    } else {
+      calculateTotals();
+    }
+
+    setStatusBadge();
+    refreshHistorySelect();
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    bind();
+    init();
   });
-
-  $("btnClear").addEventListener("click", () => {
-    $("q").value = "";
-    $("cat").value = "";
-    render();
-  });
-
-  // top actions
-  $("btnAdd").addEventListener("click", openAdd);
-  $("btnSeed").addEventListener("click", seed);
-  $("btnExport").addEventListener("click", exportCSV);
-  $("btnPrint").addEventListener("click", () => window.print());
-
-  $("btnImport").addEventListener("click", () => $("csvFile").click());
-  $("csvFile").addEventListener("change", (e) => {
-    importCSV(e.target.files[0]);
-    e.target.value = "";
-  });
-
-  // modal buttons
-  $("btnClose").addEventListener("click", closeModal);
-  $("btnCancel").addEventListener("click", closeModal);
-  $("btnSave").addEventListener("click", upsert);
-  $("modal").addEventListener("click", (e) => { if(e.target === $("modal")) closeModal(); });
-
-  // adjust modal
-  $("adjClose").addEventListener("click", closeAdj);
-  $("adjCancel").addEventListener("click", closeAdj);
-  $("adjApply").addEventListener("click", applyAdjust);
-  $("adjModal").addEventListener("click", (e) => { if(e.target === $("adjModal")) closeAdj(); });
-
-  // moves
-  $("btnClearMoves").addEventListener("click", clearMoves);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  bind();
-  render();
-  renderMoves();
-});
 </script>
 
 </body>
