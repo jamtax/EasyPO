@@ -38,24 +38,25 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
   <!-- Navigation Bar -->
-  <nav class="bg-blue-600 text-white py-4">
-    <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
-      <a href="index.html" class="font-bold text-xl mr-4">Easy&nbsp;Suite</a>
-      <a href="easy-quote.html" class="hover:underline">Quote</a>
-      <a href="easy-invoice.html" class="hover:underline">Invoice</a>
-      <a href="easy-purchase-order.html" class="hover:underline">Purchase&nbsp;Order</a>
-      <a href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
-      <a href="easy-receipt.html" class="hover:underline">Receipt</a>
-      <a href="easy-statement.html" class="hover:underline">Statement</a>
-      <a href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
-      <a href="easy-payroll.html" class="hover:underline">Payroll</a>
-      <a href="easy-inventory.html" class="hover:underline">Inventory</a>
-      <a href="easy-crm.html" class="hover:underline">CRM</a>
-      <!-- Search box only on index -->
-      <input id="search" type="text" placeholder="Search modules…" oninput="filterCards()"
-             class="ml-auto px-3 py-1 rounded text-gray-800" />
-    </div>
-  </nav>
+  <nav class="bg-blue-600 text-white py-4 no-print">
+   <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
+    <a href="index.html" class="font-bold text-xl mr-4 underline">Easy&nbsp;Suite</a>
+    <a href="easy-quote.html" class="hover:underline">Quote</a>
+    <a href="easy-invoice.html" class="hover:underline">Invoice</a>
+    <a href="easy-purchase-order.html" class="hover:underline">Purchase&nbsp;Order</a>
+    <a href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
+    <a href="easy-receipt.html" class="hover:underline">Receipt</a>
+    <a href="easy-statement.html" class="hover:underline">Statement</a>
+    <a href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
+    <a href="easy-payroll.html" class="hover:underline">Payroll</a>
+    <a href="easy-inventory.html" class="hover:underline">Inventory</a>
+    <a href="easy-crm.html" class="hover:underline">CRM</a>
+
+    <!-- Search box (index only) -->
+    <input id="search" type="text" placeholder="Search modules…" oninput="filterCards()"
+           class="ml-auto px-3 py-1 rounded text-gray-800" />
+   </div>
+ </nav>
 
   <main class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-gray-800">Welcome to Easy Suite</h1>
