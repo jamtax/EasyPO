@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy CRM</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
+<link rel="shortcut icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
+
+<!-- Tailwind -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAV -->
+<nav class="bg-blue-600 text-white py-4">
+  <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
+    <a href="index.html" class="font-bold text-xl mr-4">Easy Suite</a>
+    <a href="easy-crm.html" class="underline font-semibold">CRM</a>
+  </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8">
+
+<h1 class="text-3xl font-bold mb-6">Easy CRM</h1>
+
+<!-- ACTION BAR -->
+<div class="flex flex-wrap gap-3 mb-6">
+  <input id="searchInput" type="text" placeholder="Search..."
+    class="border px-3 py-2 rounded w-64" oninput="renderTable()">
+
+  <select id="sortSelect" class="border px-3 py-2 rounded" onchange="renderTable()">
+    <option value="name">Sort by Name</option>
+    <option value="status">Sort by Status</option>
+    <option value="followup">Sort by Follow-up</option>
+  </select>
+
+  <button onclick="exportCSV()"
+    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+    Export CSV
+  </button>
+
+  <button onclick="clearAll()"
+    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+    Clear All
+  </button>
+</div>
+
+<!-- FORM -->
+<div class="bg-white p-6 rounded shadow mb-8">
+<h2 class="font-bold text-xl mb-4">Add / Edit Contact</h2>
+
+<div class="grid md:grid-cols-2 gap-4">
+  <input id="name" placeholder="Full Name" class="border p-2 rounded">
+  <input id="company" placeholder="Company" class="border p-2 rounded">
+  <input id="email" type="email" placeholder="Email" class="border p-2 rounded">
+  <input id="phone" placeholder="Phone" class="border p-2 rounded">
+
+  <select id="status" class="border p-2 rounded">
+    <option>Lead</option>
+    <option>Prospect</option>
+    <option>Client</option>
+    <option>Inactive</option>
+  </select>
+
+  <input id="followup" type="date" class="border p-2 rounded">
+</div>
+
+<textarea id="notes" placeholder="Notes..."
+  class="border p-2 rounded w-full mt-4"></textarea>
+
+<input type="hidden" id="editId">
+
+<button onclick="saveContact()"
+  class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+  Save Contact
+</button>
+</div>
+
+<!-- TABLE -->
+<div class="bg-white rounded shadow overflow-x-auto">
+<table class="min-w-full text-sm">
+<thead class="bg-gray-200">
+<tr>
+<th class="p-3 text-left">Name</th>
+<th class="p-3 text-left">Company</th>
+<th class="p-3 text-left">Email</th>
+<th class="p-3 text-left">Status</th>
+<th class="p-3 text-left">Follow-up</th>
+<th class="p-3 text-left">Actions</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</main>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+  <div class="bg-white p-6 rounded shadow max-w-md w-full">
+    <h3 class="text-xl font-bold mb-4">Contact Details</h3>
+    <div id="modalContent" class="text-sm"></div>
+    <button onclick="closeModal()"
+      class="mt-4 bg-blue-600 text-white px-4 py-2 rounded w-full">
+      Close
+    </button>
+  </div>
+</div>
+
+<script>
+let contacts = JSON.parse(localStorage.getItem("easyCRM")) || [];
+
+function persist() {
+  localStorage.setItem("easyCRM", JSON.stringify(contacts));
+}
+
+function saveContact() {
+  if (!name.value.trim()) return alert("Name required");
+
+  const id = editId.value ? Number(editId.value) : Date.now();
+
+  const contact = {
+    id,
+    name: name.value,
+    company: company.value,
+    email: email.value,
+    phone: phone.value,
+    status: status.value,
+    followup: followup.value,
+    notes: notes.value
+  };
+
+  if (editId.value) {
+    contacts = contacts.map(c => c.id === id ? contact : c);
+  } else {
+    contacts.push(contact);
+  }
+
+  clearForm();
+  persist();
+  renderTable();
+}
+
+function clearForm() {
+  document.querySelectorAll("input, textarea").forEach(i => i.value = "");
+  editId.value = "";
+}
+
+function deleteContact(id) {
+  if (!confirm("Delete contact?")) return;
+  contacts = contacts.filter(c => c.id !== id);
+  persist();
+  renderTable();
+}
+
+function editContact(id) {
+  const c = contacts.find(x => x.id === id);
+  name.value = c.name;
+  company.value = c.company;
+  email.value = c.email;
+  phone.value = c.phone;
+  status.value = c.status;
+  followup.value
