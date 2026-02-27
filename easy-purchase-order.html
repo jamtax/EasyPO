@@ -1,47 +1,267 @@
 <!DOCTYPE html>
 <html lang="en-ZA">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
-  <link rel="shortcut icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
-  <title>Easy Purchase Order</title>
-  <meta name="description" content="Create and manage purchase orders with Easy Purchase Order.">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy Purchase Order</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+<style>
+@media print {
+  nav, .no-print, button, select {
+    display:none !important;
+  }
+  body { background:white; }
+  .print-container {
+    box-shadow:none !important;
+    border:none !important;
+  }
+}
+</style>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
-  <!-- Navigation Bar -->
-  <nav class="bg-blue-600 text-white py-4">
-    <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
-      <a href="index.html" class="font-bold text-xl mr-4">Easy&nbsp;Suite</a>
-      <a href="easy-quote.html" class="hover:underline">Quote</a>
-      <a href="easy-invoice.html" class="hover:underline">Invoice</a>
-      <a href="easy-purchase-order.html" class="underline">Purchase&nbsp;Order</a>
-      <a href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
-      <a href="easy-reciept.html" class="hover:underline">Receipt</a>
-      <a href="easy-statement.html" class="hover:underline">Statement</a>
-      <a href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
-      <a href="easy-payroll.html" class="hover:underline">Payroll</a>
-      <a href="easy-inventory.html" class="hover:underline">Inventory</a>
-      <a href="easy-crm.html" class="hover:underline">CRM</a>
-    </div>
-  </nav>
-  <main class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-4 text-gray-800">Easy Purchase Order</h1>
-    <p class="text-gray-600 mb-6">Generate purchase orders to request goods or services from suppliers. Keep track of ordered items, quantities, unit prices and overall cost.</p>
-    <div class="bg-white p-6 rounded-lg shadow text-gray-600">
-      <p class="mb-4">This page is currently a placeholder while we develop the full purchase order builder. Planned features include:</p>
-      <ul class="list-disc pl-5 space-y-2">
-        <li>Supplier information fields, including contact details and payment terms.</li>
-        <li>Itemised lists with quantity, unit cost and tax rates.</li>
-        <li>Automatic calculation of subtotals, discounts, taxes and total amount due.</li>
-        <li>Exporting purchase orders as PDF, Word or Excel documents.</li>
-        <li>Tracking order statuses and receipts of goods.</li>
-      </ul>
-    </div>
-  </main>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+
+<nav class="bg-blue-600 text-white py-4 no-print">
+<div class="container mx-auto px-4 flex items-center gap-4">
+<a href="index.html" class="font-bold text-xl">Easy Suite</a>
+<a href="easy-invoice.html" class="hover:underline">Invoice</a>
+<a href="easy-purchase-order.html" class="underline font-semibold">Purchase Order</a>
+</div>
+</nav>
+
+<main class="container mx-auto px-4 py-8">
+
+<div class="bg-white p-8 rounded-lg shadow print-container">
+
+<!-- HEADER -->
+<div class="flex justify-between items-start mb-6">
+<div>
+<h1 class="text-3xl font-bold">Purchase Order</h1>
+<p class="text-gray-500">Easy Suite Procurement Module</p>
+</div>
+
+<div class="text-right space-y-2">
+<div>
+<label class="text-sm">PO Number</label>
+<input id="poNumber" class="border px-2 py-1 rounded text-sm">
+</div>
+<div>
+<label class="text-sm">Date</label>
+<input type="date" id="poDate" class="border px-2 py-1 rounded text-sm">
+</div>
+<div>
+<label class="text-sm">Status</label>
+<select id="status" class="border px-2 py-1 rounded text-sm">
+<option>Draft</option>
+<option>Sent</option>
+<option>Approved</option>
+<option>Received</option>
+</select>
+</div>
+<div>
+<select id="currency" class="border px-2 py-1 rounded text-sm">
+<option value="R">ZAR (R)</option>
+<option value="$">USD ($)</option>
+<option value="€">EUR (€)</option>
+</select>
+</div>
+</div>
+</div>
+
+<!-- SUPPLIER -->
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+<div>
+<h2 class="font-semibold mb-2">Supplier</h2>
+<input id="supplierName" placeholder="Supplier Name" class="w-full border p-2 rounded mb-2">
+<input id="supplierEmail" placeholder="Email" class="w-full border p-2 rounded mb-2">
+<input id="supplierPhone" placeholder="Phone" class="w-full border p-2 rounded mb-2">
+<textarea id="supplierAddress" placeholder="Address" class="w-full border p-2 rounded"></textarea>
+</div>
+
+<div>
+<h2 class="font-semibold mb-2">Delivery</h2>
+<input id="deliveryDate" type="date" class="w-full border p-2 rounded mb-2">
+<textarea id="deliveryAddress" placeholder="Delivery Address" class="w-full border p-2 rounded mb-2"></textarea>
+<input id="paymentTerms" placeholder="Payment Terms (e.g. Net 30)" class="w-full border p-2 rounded">
+</div>
+</div>
+
+<!-- ITEMS -->
+<h2 class="font-semibold mb-2">Items</h2>
+<table class="w-full text-sm border mb-4">
+<thead class="bg-gray-200">
+<tr>
+<th class="p-2 border">Description</th>
+<th class="p-2 border w-20">Qty</th>
+<th class="p-2 border w-28">Unit</th>
+<th class="p-2 border w-20">VAT %</th>
+<th class="p-2 border w-28">Total</th>
+<th class="p-2 border w-12 no-print"></th>
+</tr>
+</thead>
+<tbody id="itemsBody"></tbody>
+</table>
+
+<button onclick="addRow()" class="bg-blue-600 text-white px-4 py-2 rounded mb-6 no-print">
++ Add Item
+</button>
+
+<!-- TOTALS -->
+<div class="flex justify-end">
+<div class="w-full md:w-1/3 space-y-2">
+<div class="flex justify-between">
+<span>Subtotal:</span>
+<span id="subtotal">0.00</span>
+</div>
+<div class="flex justify-between">
+<span>VAT Total:</span>
+<span id="vatTotal">0.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Discount:</span>
+<input type="number" id="discount" class="border px-2 py-1 w-24 text-right" value="0" oninput="calculateTotals()">
+</div>
+<div class="flex justify-between font-bold text-lg border-t pt-2">
+<span>Grand Total:</span>
+<span id="grandTotal">0.00</span>
+</div>
+</div>
+</div>
+
+<!-- NOTES -->
+<div class="mt-6">
+<h2 class="font-semibold mb-2">Notes</h2>
+<textarea id="notes" class="w-full border p-2 rounded" rows="3"></textarea>
+</div>
+
+<!-- ACTIONS -->
+<div class="mt-6 flex gap-4 no-print flex-wrap">
+<button onclick="savePO()" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
+<button onclick="loadPO()" class="bg-yellow-500 text-white px-4 py-2 rounded">Load</button>
+<button onclick="exportJSON()" class="bg-indigo-600 text-white px-4 py-2 rounded">Export JSON</button>
+<button onclick="window.print()" class="bg-gray-700 text-white px-4 py-2 rounded">Print / PDF</button>
+<button onclick="clearForm()" class="bg-red-600 text-white px-4 py-2 rounded">Clear</button>
+</div>
+
+</div>
+</main>
+
+<script>
+
+let poCounter = localStorage.getItem("poCounter") || 1;
+
+function generatePONumber(){
+  const number = "PO-" + String(poCounter).padStart(4,'0');
+  poCounter++;
+  localStorage.setItem("poCounter", poCounter);
+  return number;
+}
+
+document.getElementById("poNumber").value = generatePONumber();
+document.getElementById("poDate").valueAsDate = new Date();
+
+function addRow(){
+  const row = document.createElement("tr");
+  row.innerHTML = `
+  <td class="border p-1"><input class="desc w-full border p-1"></td>
+  <td class="border p-1"><input type="number" class="qty w-full border p-1 text-right" value="1" oninput="calculateTotals()"></td>
+  <td class="border p-1"><input type="number" class="price w-full border p-1 text-right" value="0" oninput="calculateTotals()"></td>
+  <td class="border p-1"><input type="number" class="vat w-full border p-1 text-right" value="15" oninput="calculateTotals()"></td>
+  <td class="border p-1 text-right line-total">0.00</td>
+  <td class="border p-1 text-center no-print">
+  <button onclick="this.closest('tr').remove(); calculateTotals();" class="text-red-600">✕</button>
+  </td>
+  `;
+  document.getElementById("itemsBody").appendChild(row);
+  calculateTotals();
+}
+
+function calculateTotals(){
+  let subtotal = 0;
+  let vatTotal = 0;
+
+  document.querySelectorAll("#itemsBody tr").forEach(row=>{
+    const qty = parseFloat(row.querySelector(".qty").value)||0;
+    const price = parseFloat(row.querySelector(".price").value)||0;
+    const vat = parseFloat(row.querySelector(".vat").value)||0;
+
+    const line = qty * price;
+    const vatAmount = line * (vat/100);
+
+    row.querySelector(".line-total").innerText = line.toFixed(2);
+
+    subtotal += line;
+    vatTotal += vatAmount;
+  });
+
+  const discount = parseFloat(document.getElementById("discount").value)||0;
+
+  const symbol = document.getElementById("currency").value;
+
+  document.getElementById("subtotal").innerText = symbol + " " + subtotal.toFixed(2);
+  document.getElementById("vatTotal").innerText = symbol + " " + vatTotal.toFixed(2);
+  document.getElementById("grandTotal").innerText = symbol + " " + (subtotal + vatTotal - discount).toFixed(2);
+}
+
+function savePO(){
+  const data = collectData();
+  localStorage.setItem(data.poNumber, JSON.stringify(data));
+  alert("Purchase Order Saved");
+}
+
+function loadPO(){
+  const po = prompt("Enter PO Number to Load:");
+  const data = JSON.parse(localStorage.getItem(po));
+  if(!data){ alert("Not found"); return; }
+
+  document.getElementById("poNumber").value = data.poNumber;
+  document.getElementById("supplierName").value = data.supplierName;
+  document.getElementById("itemsBody").innerHTML = "";
+  data.items.forEach(item=>{
+    addRow();
+    const row = document.querySelector("#itemsBody tr:last-child");
+    row.querySelector(".desc").value = item.desc;
+    row.querySelector(".qty").value = item.qty;
+    row.querySelector(".price").value = item.price;
+    row.querySelector(".vat").value = item.vat;
+  });
+  calculateTotals();
+}
+
+function collectData(){
+  const items = [];
+  document.querySelectorAll("#itemsBody tr").forEach(row=>{
+    items.push({
+      desc: row.querySelector(".desc").value,
+      qty: row.querySelector(".qty").value,
+      price: row.querySelector(".price").value,
+      vat: row.querySelector(".vat").value
+    });
+  });
+
+  return {
+    poNumber: document.getElementById("poNumber").value,
+    supplierName: document.getElementById("supplierName").value,
+    items: items
+  };
+}
+
+function exportJSON(){
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = data.poNumber + ".json";
+  a.click();
+}
+
+function clearForm(){
+  if(confirm("Clear Purchase Order?")) location.reload();
+}
+
+addRow();
+
+</script>
 </body>
 </html>
