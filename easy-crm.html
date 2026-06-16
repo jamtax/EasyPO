@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-ZA">
 <head>
+  <!-- NAV_SYNC: scripts/sync-nav.js -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Easy CRM | Easy Suite</title>
-  <meta name="description" content="Easy CRM – manage contacts, pipeline, follow-ups, and activity. Offline-first with CSV/JSON import/export." />
+  
 
-  <!-- Favicons (remote + optional local fallback) -->
-  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
-  <link rel="shortcut icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
-  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/jamtax/EasyPO/refs/heads/main/logo.png">
-  <!-- Optional local icons if you have them in the same folder -->
+  <!-- Favicon -->
   <link rel="icon" href="icon.png" type="image/png">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="icon.png">
+<meta name="description" content="Easy CRM â€" manage contacts, pipeline, follow-ups, and activity. Offline-first with CSV/JSON import/export." />
 
-  <!-- Tailwind (CDN) -->
+  <!-- Favicons (remote + optional local fallback) --><!-- Optional local icons if you have them in the same folder --><!-- Tailwind (CDN) -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 
   <style>
@@ -77,35 +75,35 @@
       tr{page-break-inside:avoid;}
     }
   </style>
+  <link rel="stylesheet" href="assets/css/easy-print.css" />
+  <script defer src="assets/js/easy-suite-core.js"></script>
 </head>
 
 <body class="min-h-screen">
 
-  <!-- NAV -->
-  <nav class="bg-blue-600 text-white py-4 no-print">
-    <div class="container mx-auto px-4 flex flex-wrap items-center gap-4">
-      <a data-safe-link href="index.html" class="font-black text-xl mr-4">Easy&nbsp;Suite</a>
-      <a data-safe-link href="easy-quote.html" class="hover:underline">Quote</a>
-      <a data-safe-link href="easy-invoice.html" class="hover:underline">Invoice</a>
-      <a data-safe-link href="easy-purchase-order.html" class="hover:underline">Purchase&nbsp;Order</a>
-      <a data-safe-link href="easy-sales-order.html" class="hover:underline">Sales&nbsp;Order</a>
-      <a data-safe-link href="easy-receipt.html" class="hover:underline">Receipt</a>
-      <a data-safe-link href="easy-statement.html" class="hover:underline">Statement</a>
-      <a data-safe-link href="easy-job-card.html" class="hover:underline">Job&nbsp;Card</a>
-      <a data-safe-link href="easy-payroll.html" class="hover:underline">Payroll</a>
-      <a data-safe-link href="easy-inventory.html" class="hover:underline">Inventory</a>
-      <a data-safe-link href="easy-crm.html" class="underline font-extrabold">CRM</a>
-
-      <div class="ml-auto flex items-center gap-2">
-        <button id="btnDark" class="btn btn-outline" title="Toggle dark mode (D)">
-          <span class="mono">D</span> Dark
-        </button>
-        <button id="btnPrint" class="btn btn-outline" title="Print (manual style)">
-          Print
-        </button>
+  <!-- Easy Suite mounts (injected) -->
+  <div id="easyNavMount" class="no-print"></div>
+<header class="bg-white border-b border-gray-200 no-print">
+  <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row gap-4 sm:gap-0 items-start sm:items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black">C</div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-blue-700">EasyCRM</h1>
+        <p class="text-sm text-gray-500">Feature-Rich CRM Manager</p>
       </div>
     </div>
-  </nav>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="index.html" class="btn btn-primary" title="Back to Dashboard">
+        <i class="fa-solid fa-gauge"></i> Dashboard
+      </a>
+    </div>
+  </div>
+</header><!-- HEADER:START --><!-- HEADER:END --><!-- NAV -->
+  <!-- NAV:START --></div>
+  </div>
+</div>
+<!-- NAV:END -->
 
   <main class="container mx-auto px-4 py-8">
 
@@ -181,7 +179,7 @@
             <option value="name">Name</option>
             <option value="company">Company</option>
             <option value="status">Status</option>
-            <option value="revenueDesc">Revenue (High → Low)</option>
+            <option value="revenueDesc">Revenue (High â†' Low)</option>
             <option value="followupAsc">Follow-up (Soonest)</option>
             <option value="updatedDesc">Recently Updated</option>
           </select>
@@ -268,7 +266,7 @@
           <h3 id="modalTitle" class="text-xl font-black text-slate-900">Add Contact</h3>
           <p class="text-xs text-slate-500">Required: name. Pipeline is your expected value (ZAR).</p>
         </div>
-        <button id="btnClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">×</button>
+        <button id="btnClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">Ã-</button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
@@ -338,9 +336,9 @@
       <div class="flex items-start justify-between gap-3">
         <div>
           <h3 class="text-xl font-black text-slate-900">Contact Profile</h3>
-          <p class="text-xs text-slate-500" id="viewSub">—</p>
+          <p class="text-xs text-slate-500" id="viewSub">â€"</p>
         </div>
-        <button id="btnViewClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">×</button>
+        <button id="btnViewClose" class="text-slate-500 hover:text-slate-900 text-xl font-black">Ã-</button>
       </div>
 
       <div id="viewBody" class="mt-4"></div>
@@ -358,7 +356,7 @@
 
 <script>
 /* ============================
-   Easy CRM – Offline First
+   Easy CRM â€" Offline First
    ============================ */
 
 const STORE_KEY = "easy.crm.v2";
@@ -539,11 +537,11 @@ function openView(id){
   const c = state.contacts.find(x => x.id === id);
   if(!c) { toast("Contact not found."); return; }
 
-  $("viewSub").textContent = c.company ? c.company : "—";
+  $("viewSub").textContent = c.company ? c.company : "â€"";
 
   const overdue = isOverdueDate(c.followup);
   const follow = c.followup ? escapeHtml(c.followup) : "-";
-  const tags = (c.tags||[]).map(t => `<span class="pill pill-inactive mr-1 mb-1">${escapeHtml(t)}</span>`).join(" ") || `<span class="text-slate-500">—</span>`;
+  const tags = (c.tags||[]).map(t => `<span class="pill pill-inactive mr-1 mb-1">${escapeHtml(t)}</span>`).join(" ") || `<span class="text-slate-500">â€"</span>`;
 
   $("viewBody").innerHTML = `
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -552,8 +550,8 @@ function openView(id){
         <div class="text-lg font-black">${escapeHtml(c.name)}</div>
         <div class="text-sm text-slate-600 mt-1">${escapeHtml(c.company || "")}</div>
         <div class="mt-3 text-sm">
-          <div><span class="font-black">Email:</span> ${c.email ? `<a class="text-blue-600 hover:underline" href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : "—"}</div>
-          <div><span class="font-black">Phone:</span> ${c.phone ? `<a class="text-blue-600 hover:underline" href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : "—"}</div>
+          <div><span class="font-black">Email:</span> ${c.email ? `<a class="text-blue-600 hover:underline" href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : "â€""}</div>
+          <div><span class="font-black">Phone:</span> ${c.phone ? `<a class="text-blue-600 hover:underline" href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : "â€""}</div>
         </div>
       </div>
 
@@ -580,14 +578,14 @@ function openView(id){
 
       <div class="card p-4 md:col-span-2">
         <div class="text-xs text-slate-500 font-black mb-2">NOTES</div>
-        <div class="text-sm whitespace-pre-line">${escapeHtml(c.notes || "—")}</div>
+        <div class="text-sm whitespace-pre-line">${escapeHtml(c.notes || "â€"")}</div>
       </div>
 
       <div class="card p-4 md:col-span-2">
         <div class="text-xs text-slate-500 font-black mb-2">METADATA</div>
         <div class="text-xs text-slate-500">
           Created: <span class="mono">${escapeHtml(new Date(c.createdAt).toLocaleString())}</span>
-          • Updated: <span class="mono">${escapeHtml(new Date(c.updatedAt).toLocaleString())}</span>
+          â€¢ Updated: <span class="mono">${escapeHtml(new Date(c.updatedAt).toLocaleString())}</span>
         </div>
       </div>
     </div>
@@ -669,7 +667,7 @@ function render(){
   const slice = list.slice(start, start + pageSize);
 
   $("pageMeta").textContent = `${state.page} / ${totalPages}`;
-  $("tableMeta").textContent = `${list.length} records • showing ${slice.length} • page size ${pageSize}`;
+  $("tableMeta").textContent = `${list.length} records â€¢ showing ${slice.length} â€¢ page size ${pageSize}`;
 
   const rows = $("rows");
   rows.innerHTML = "";
@@ -727,8 +725,8 @@ function renderActivity(){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-3 mono">${escapeHtml(new Date(a.ts).toLocaleString())}</td>
-      <td class="p-3 font-black">${escapeHtml(a.contactName || "—")}</td>
-      <td class="p-3">${escapeHtml(a.event || "—")}</td>
+      <td class="p-3 font-black">${escapeHtml(a.contactName || "â€"")}</td>
+      <td class="p-3">${escapeHtml(a.event || "â€"")}</td>
       <td class="p-3">${escapeHtml(a.note || "")}</td>
     `;
     tb.appendChild(tr);
@@ -1100,3 +1098,7 @@ init();
 </script>
 </body>
 </html>
+
+
+
+

@@ -344,6 +344,63 @@
       };
       parseStatus.className = `mt-2 text-base font-bold ${palette[tone] || palette.amber}`;
       parseStatus.textContent = message;
+    const formatBytes = (bytes) => {
+      if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let size = bytes;
+      let index = 0;
+      while (size >= 1024 && index < units.length - 1) {
+        size /= 1024;
+        index += 1;
+      }
+      return `${size.toFixed(size >= 10 || index === 0 ? 0 : 2)} ${units[index]}`;
+    };
+
+    const baseName = () => (state.originalName || 'document.pdf').replace(/\.pdf$/i, '') || 'document';
+
+    const log = (message, tone = 'info') => {
+      const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const toneClass = tone === 'error' ? 'danger' : tone === 'warn' ? 'warning' : tone === 'success' ? 'success' : '';
+      const line = document.createElement('div');
+      line.innerHTML = `<span style="color:#94a3b8;">[${stamp}]</span> <span class="${toneClass}">${message}</span>`;
+      logBody.appendChild(line);
+      logBody.scrollTop = logBody.scrollHeight;
+    };
+
+    const setStatus = (message, meta = 'Idle', progress = null) => {
+      statusText.textContent = message;
+      statusMeta.textContent = meta;
+      if (progress !== null) progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    };
+
+    const setMetricValues = (parsed) => {
+      pageCount.textContent = String(parsed?.pageCount ?? 0);
+      charCount.textContent = new Intl.NumberFormat().format(parsed?.characterCount ?? 0);
+      tableCount.textContent = String(parsed?.tableCount ?? 0);
+      ocrPageCount.textContent = String(parsed?.ocrPageCount ?? 0);
+    };
+
+    const resetState = () => {
+      state.file = null;
+      state.fileBuffer = null;
+      state.parsed = null;
+      state.originalName = 'document.pdf';
+      fileInput.value = '';
+      fileMeta.textContent = 'No file selected yet.';
+      previewText.textContent = 'Upload a PDF to generate a preview.';
+      previewTables.innerHTML = '';
+      previewSummary.textContent = '';
+      setMetricValues(null);
+      setStatus('Awaiting PDF upload', 'Idle', 0);
+      exportHint.textContent = 'Analyze a PDF to enable export';
+      exportButtons.forEach((btn) => btn.disabled = true);
+      analyzeBtn.disabled = true;
+      log('State reset. Ready for another document.');
+    };
+
+    const enableExports = () => {
+      exportButtons.forEach((btn) => btn.disabled = false);
+      exportHint.textContent = 'Exports enabled';
     };
 
     const setFile = async (file) => {
@@ -487,6 +544,7 @@
 
     const exportXml = () => {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<pdfDocument sourceFile="${escapeXml(state.parsed.sourceFile)}" pageCount="${state.parsed.pageCount}" extractedAt="${escapeXml(state.parsed.extractedAt)}">\n${state.parsed.pages.map(page => `  <page number="${page.pageNumber}">\n${page.lines.map(line => `    <line>${escapeXml(line)}</line>`).join('\n')}\n    <text>${escapeXml(page.text)}</text>\n  </page>`).join('\n')}\n</pdfDocument>`;
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<document sourceFile="${xmlEscape(state.parsed.sourceFile)}" pageCount="${state.parsed.pageCount}" tableCount="${state.parsed.tableCount}" ocrPageCount="${state.parsed.ocrPageCount}" extractedAt="${xmlEscape(state.parsed.extractedAt)}">\n${state.parsed.pages.map((page) => `  <page number="${page.pageNumber}" source="${xmlEscape(page.source)}" confidence="${Math.round((page.confidence || 0) * 100)}">\n    <text>${xmlEscape(page.text)}</text>\n    <lines>\n${page.lines.map((line) => `      <line>${xmlEscape(line)}</line>`).join('\n')}\n    </lines>\n    <tables>\n${page.tables.map((table) => `      <table id="${xmlEscape(table.id)}" title="${xmlEscape(table.title)}" rowCount="${table.rowCount}" columnCount="${table.columnCount}" confidence="${Math.round((table.confidence || 0) * 100)}">\n        <headers>\n${table.headers.map((header) => `          <header>${xmlEscape(header)}</header>`).join('\n')}\n        </headers>\n        <rows>\n${table.rows.map((row) => `          <row>${row.map((cell) => `<cell>${xmlEscape(cell)}</cell>`).join('')}</row>`).join('\n')}\n        </rows>\n      </table>`).join('\n')}\n    </tables>\n  </page>`).join('\n')}\n</document>`;
       const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
       saveAs(blob, `${baseName()}.xml`);
     };
@@ -521,25 +579,73 @@
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pageRows), 'Pages');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lineRows), 'Lines');
+      const summaryRows = [{
+        source_file: state.parsed.sourceFile,
+        pages: state.parsed.pageCount,
+        characters: state.parsed.characterCount,
+        tables: state.parsed.tableCount,
+        ocr_pages: state.parsed.ocrPageCount,
+        extracted_at: state.parsed.extractedAt,
+        ocr_mode: state.parsed.ocrMode
+      }];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+
+      const pageRows = state.parsed.pages.map((page) => ({
+        page_number: page.pageNumber,
+        source: page.source,
+        confidence: Math.round((page.confidence || 0) * 100),
+        line_count: page.lines.length,
+        table_count: page.tables.length,
+        text: page.text
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pageRows), 'Pages');
+
+      const lineRows = state.parsed.pages.flatMap((page) => page.lines.map((line, index) => ({
+        page_number: page.pageNumber,
+        source: page.source,
+        line_number: index + 1,
+        line_text: line
+      })));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lineRows), 'Lines');
+
+      state.parsed.tables.forEach((table, idx) => {
+        const sheetRows = [Object.fromEntries(table.headers.map((header, headerIndex) => [header || `Column ${headerIndex + 1}`, header]))];
+        table.rows.forEach((row) => {
+          const record = {};
+          table.headers.forEach((header, colIndex) => { record[header || `Column ${colIndex + 1}`] = row[colIndex] || ''; });
+          sheetRows.push(record);
+        });
+        const worksheet = XLSX.utils.json_to_sheet(sheetRows, { skipHeader: true });
+        XLSX.utils.book_append_sheet(wb, worksheet, `Table${idx + 1}`.slice(0, 31));
+      });
+
       XLSX.writeFile(wb, `${baseName()}.xlsx`);
     };
 
     const exportDocx = async () => {
-      const { Document, Packer, Paragraph, HeadingLevel, TextRun } = window.docx;
+      const { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType } = window.docx;
       const children = [
-        new Paragraph({
-          heading: HeadingLevel.TITLE,
-          children: [new TextRun(`Converted from ${state.parsed.sourceFile}`)]
-        }),
+        new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun(`Converted from ${state.parsed.sourceFile}`)] }),
         new Paragraph({ text: `Pages: ${state.parsed.pageCount}` }),
-        new Paragraph({ text: `Extracted: ${new Date(state.parsed.extractedAt).toLocaleString()}` })
+        new Paragraph({ text: `Detected tables: ${state.parsed.tableCount}` }),
+        new Paragraph({ text: `OCR pages: ${state.parsed.ocrPageCount}` }),
+        new Paragraph({ text: `Extracted at: ${new Date(state.parsed.extractedAt).toLocaleString()}` })
       ];
-      state.parsed.pages.forEach(page => {
-        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, text: `Page ${page.pageNumber}` }));
-        (page.lines.length ? page.lines : [page.text]).forEach(line => {
-          children.push(new Paragraph({ text: line || ' ' }));
+
+      state.parsed.pages.forEach((page) => {
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, text: `Page ${page.pageNumber} (${page.source})` }));
+        children.push(new Paragraph({ text: `Confidence: ${Math.round((page.confidence || 0) * 100)}%` }));
+        page.lines.forEach((line) => children.push(new Paragraph({ text: line })));
+        page.tables.forEach((table) => {
+          children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: `${table.title}` }));
+          const rows = [
+            new TableRow({ children: table.headers.map((header) => new TableCell({ children: [new Paragraph({ text: header || 'Column' })] })) }),
+            ...table.rows.map((row) => new TableRow({ children: row.map((cell) => new TableCell({ children: [new Paragraph({ text: cell || '' })] })) }))
+          ];
+          children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows }));
         });
       });
+
       const doc = new Document({ sections: [{ children }] });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, `${baseName()}.docx`);
@@ -550,26 +656,97 @@
       saveAs(state.file, state.originalName);
     };
 
-    exportButtons.forEach(button => {
+    const runAnalysis = async () => {
+      if (!state.fileBuffer) return;
+      analyzeBtn.disabled = true;
+      exportButtons.forEach((btn) => btn.disabled = true);
+      exportHint.textContent = 'Analysis in progress';
+      setStatus('Starting analysis…', 'Preparing', 2);
+      log('Beginning analysis pipeline.');
+
+      try {
+        state.parsed = await buildParsedObject();
+        updateTextPreview();
+        updateTablePreview();
+        updateSummaryPreview();
+        setMetricValues(state.parsed);
+        setStatus('Analysis completed successfully', `${state.parsed.pageCount} page(s) processed`, 100);
+        enableExports();
+        log(`Analysis complete. Pages=${state.parsed.pageCount}, tables=${state.parsed.tableCount}, OCR pages=${state.parsed.ocrPageCount}.`, 'success');
+      } catch (error) {
+        console.error(error);
+        setStatus('Analysis failed', error?.message || 'Unknown error', 0);
+        previewText.textContent = 'The document could not be parsed. It may be encrypted, malformed, or too large for the current browser session.';
+        previewTables.innerHTML = '';
+        previewSummary.textContent = '';
+        log(`Analysis failed: ${error?.message || error}`, 'error');
+      } finally {
+        analyzeBtn.disabled = false;
+      }
+    };
+
+    exportButtons.forEach((button) => {
       button.addEventListener('click', async () => {
-        if (!state.parsed && button.dataset.format !== 'pdf') return;
+        const format = button.dataset.format;
+        if (format !== 'pdf' && !state.parsed) return;
         try {
-          switch (button.dataset.format) {
+          log(`Export requested: ${format.toUpperCase()}.`);
+          switch (format) {
             case 'pdf': exportPdf(); break;
+            case 'docx': await exportDocx(); break;
+            case 'xlsx': exportXlsx(); break;
+            case 'csv': exportCsv(); break;
             case 'txt': exportTxt(); break;
             case 'json': exportJson(); break;
             case 'xml': exportXml(); break;
-            case 'csv': exportCsv(); break;
-            case 'xlsx': exportXlsx(); break;
-            case 'docx': await exportDocx(); break;
             default: break;
           }
+          log(`${format.toUpperCase()} export completed.`, 'success');
         } catch (error) {
           console.error(error);
-          setStatus(`Export failed for ${button.dataset.format?.toUpperCase() || 'selected format'}`, 'red');
+          setStatus(`Export failed for ${format.toUpperCase()}`, error?.message || 'Export error');
+          log(`Export failed for ${format.toUpperCase()}: ${error?.message || error}`, 'error');
         }
       });
     });
+
+    fileInput.addEventListener('change', async (event) => {
+      const [file] = event.target.files || [];
+      if (file) await setFile(file);
+    });
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    ['dragenter', 'dragover'].forEach((eventName) => {
+      dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach((eventName) => {
+      dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+      });
+    });
+    dropzone.addEventListener('drop', async (event) => {
+      const file = event.dataTransfer?.files?.[0];
+      if (file) await setFile(file);
+    });
+
+    analyzeBtn.addEventListener('click', runAnalysis);
+    resetBtn.addEventListener('click', resetState);
+    sampleBtn.addEventListener('click', () => document.getElementById('conversion-notes').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    clearLogBtn.addEventListener('click', () => { logBody.textContent = ''; log('Log cleared.'); });
+    ocrMode.addEventListener('change', () => { ocrModeBadge.textContent = ocrMode.options[ocrMode.selectedIndex].text.split(' ')[0]; });
+
+    resetState();
+    setPreviewTab('text');
   </script>
 </body>
 </html>

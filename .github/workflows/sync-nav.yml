@@ -1,0 +1,60 @@
+name: Easy Suite Nav Enforcement
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  enforce-navigation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies (Optional)
+        run: npm install || true
+
+      - name: Inject Navigation + Sync Script
+        run: node tools/inject-nav.js
+
+      - name: Validate HTML Structure
+        run: |
+          npm install -g htmlhint
+          htmlhint "**/*.html"
+
+      - name: Commit Changes If Modified
+        run: |
+          git config --global user.name "easy-suite-bot"
+          git config --global user.email "bot@easy-suite.local"
+          git add .
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto enforce navigation"
+          git push
+
+  deploy:
+    needs: enforce-navigation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
